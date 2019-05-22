@@ -15,6 +15,7 @@ variables:
   solution: '**/*.sln'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
+  BuildVersion: $(Version.MajorMinor)  
 
 steps:
 - task: NuGetToolInstaller@0
