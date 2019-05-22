@@ -1,0 +1,7 @@
+﻿gameRootDirectory: /F/Games
+host: <ip_address>
+user: <username>
+password: <password>
+port: 21
+
+gamesToUpload:    
