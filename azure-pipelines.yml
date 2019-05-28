@@ -45,4 +45,5 @@ steps:
     feedsToUse: 'select'
     packagesToPush: '$(Build.ArtifactStagingDirectory)/*.nupkg'
     nuGetFeedType: 'internal'
+    publishVstsFeed: 'xboxftp'
     versioningScheme: 'off'
