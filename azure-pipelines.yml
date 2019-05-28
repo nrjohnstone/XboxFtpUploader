@@ -27,4 +27,9 @@ steps:
     feedsToUse: 'select'
     versioningScheme: 'off'
 
-
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'pack'
+    feedsToUse: 'select'
+    packagesToPack: '**/*.csproj'
+    versioningScheme: 'byBuildNumber'
