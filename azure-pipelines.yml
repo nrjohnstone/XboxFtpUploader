@@ -31,7 +31,7 @@ steps:
   inputs:
     command: 'pack'
     feedsToUse: 'select'
-    packagesToPack: '**/*.csproj'
+    packagesToPack: '**/XboxFtp.Console.csproj'
     versioningScheme: 'byBuildNumber'
 
 - task: DotNetCoreCLI@2
