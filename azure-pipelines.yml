@@ -33,3 +33,11 @@ steps:
     feedsToUse: 'select'
     packagesToPack: '**/*.csproj'
     versioningScheme: 'byBuildNumber'
+
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'push'
+    feedsToUse: 'select'
+    packagesToPush: '$(Build.ArtifactStagingDirectory)/*.nupkg'
+    nuGetFeedType: 'internal'
+    versioningScheme: 'off'
