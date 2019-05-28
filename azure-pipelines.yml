@@ -34,11 +34,10 @@ steps:
     packagesToPack: '**/XboxFtp.Console.csproj'
     versioningScheme: 'byBuildNumber'
 
-- task: NuGetCommand@2
+- task: DotNetCoreCLI@2
   inputs:
     command: 'push'
     feedsToUse: 'select'
-    packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg;!$(Build.ArtifactStagingDirectory)/**/*.symbols.nupkg'
+    packagesToPush: '$(Build.ArtifactStagingDirectory)/*.nupkg'
     nuGetFeedType: 'internal'
-    publishVstsFeed: 'https://nrjsolutions.pkgs.visualstudio.com/_packaging/xboxftp/nuget/v3/index.json'
     versioningScheme: 'off'
