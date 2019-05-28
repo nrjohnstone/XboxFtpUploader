@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using Adapter.Persistence.Ftp;
+using Adapter.Persistence.InMemory;
 using Serilog;
 using XboxFtp.Core.UseCases;
 using YamlDotNet.Serialization;
@@ -28,10 +30,17 @@ namespace XboxFtp.Console
 
             try
             {
-                FtpClientFactory ftpClientFactory = new FtpClientFactory(ftpXboxSettings);
+                IXboxGameRepositoryFactory xboxGameRepositoryFactory = null;
 
-                IXboxGameRepositoryFactory xboxGameRepositoryFactory =
-                    new FtpXboxGameRepositoryFactory(ftpClientFactory, ftpXboxSettings);
+                if (ftpXboxSettings.TestMode)
+                {
+                    xboxGameRepositoryFactory = UseInMemoryAdapter();
+                }
+                else
+                {
+                    xboxGameRepositoryFactory = UseFtpAdapter(ftpXboxSettings);
+                }
+
                 UploadArchivesUseCase useCase = new UploadArchivesUseCase(xboxGameRepositoryFactory);
 
                 if (ftpXboxSettings.GamesToUpload == null || ftpXboxSettings.GamesToUpload.Count == 0)
@@ -51,10 +60,25 @@ namespace XboxFtp.Console
             Environment.Exit(0);
         }
 
+        private static IXboxGameRepositoryFactory UseInMemoryAdapter()
+        {
+            var factory = new XboxGameRepositoryFactory(new Dictionary<string, long>());
+            return factory;
+        }
+
+        private static IXboxGameRepositoryFactory UseFtpAdapter(FtpXboxSettings ftpXboxSettings)
+        {
+            FtpClientFactory ftpClientFactory = new FtpClientFactory(ftpXboxSettings);
+
+            IXboxGameRepositoryFactory xboxGameRepositoryFactory =
+                new FtpXboxGameRepositoryFactory(ftpClientFactory, ftpXboxSettings);
+            return xboxGameRepositoryFactory;
+        }
+
         private static void ConfigurePaths()
         {
-            _xboxSettingsDirectory = Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "XboxFtp");
-            _xboxSettingsPath = Path.Join(_xboxSettingsDirectory, "local.yaml");
+            _xboxSettingsDirectory = Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "XboxFtp");
+            _xboxSettingsPath = Path.Join(_xboxSettingsDirectory, "settings.yaml");
         }
 
         private static FtpXboxSettings LoadSettings()

@@ -18,12 +18,14 @@
   <ItemGroup>
     <PackageReference Include="Serilog" Version="2.8.0" />
     <PackageReference Include="Serilog.Sinks.Console" Version="3.1.1" />
+    <PackageReference Include="Serilog.Sinks.File" Version="4.0.0" />
     <PackageReference Include="SimpleInjector" Version="4.6.0" />
     <PackageReference Include="YamlDotNet" Version="6.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Adapter.Persistence.Ftp\Adapter.Persistence.Ftp.csproj" />
+    <ProjectReference Include="..\Adapter.Persistence.InMemory\Adapter.Persistence.InMemory.csproj" />
     <ProjectReference Include="..\XboxFtp.Core\XboxFtp.Core.csproj" />
   </ItemGroup>
 
