@@ -31,19 +31,3 @@ steps:
     projects: '$(solution)'
     feedsToUse: 'select'
     versioningScheme: 'off'
-
-- task: DotNetCoreCLI@2
-  inputs:
-    command: 'pack'
-    feedsToUse: 'select'
-    packagesToPack: '**/XboxFtp.Console.csproj'
-    versioningScheme: 'byBuildNumber'
-
-- task: DotNetCoreCLI@2
-  inputs:
-    command: 'push'
-    feedsToUse: 'select'
-    packagesToPush: '$(Build.ArtifactStagingDirectory)/*.nupkg'
-    nuGetFeedType: 'internal'
-    publishVstsFeed: 'xboxftp'
-    versioningScheme: 'off'
