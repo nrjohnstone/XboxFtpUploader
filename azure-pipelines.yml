@@ -35,7 +35,9 @@ steps:
 - task: DotNetCoreCLI@2
   inputs:
     command: 'publish'
+    zipAfterPublish: true
     majorVersion: 1
     minorVersion: 0
     patchVersion: 0
     publishWebProjects: false
+    arguments: --runtime win-x86
