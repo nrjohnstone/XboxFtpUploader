@@ -48,4 +48,6 @@ steps:
   displayName: "Publish to Feedz.io"
   inputs:
     targetType: 'inline'
-    script: 'nuget.exe push -Source "https://f.feedz.io/nrjsolutions/release-apps/nuget" -ApiKey $(feedz-io-apikey) "$(Build.ArtifactStagingDirectory)/XboxFtpUploader.1.0.0.$(Build.BuildId).zip"'
+    script: '
+    write-output $(feedz-io-apikey)
+    nuget.exe push -Source "https://f.feedz.io/nrjsolutions/release-apps/nuget" -ApiKey $(feedz-io-apikey) "$(Build.ArtifactStagingDirectory)/XboxFtpUploader.1.0.0.$(Build.BuildId).zip"'
