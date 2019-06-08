@@ -52,11 +52,19 @@ steps:
 #     write-output $(feedz-io-apikey)
 #     nuget.exe push -Source "https://f.feedz.io/nrjsolutions/release-apps" -ApiKey $(feedz-io-apikey) "$(Build.ArtifactStagingDirectory)/XboxFtpUploader.1.0.0.$(Build.BuildId).zip"'
 
-- task: cURLUploader@2
+# - task: cURLUploader@2
+#   inputs:
+#     files: ''
+#     authType: 'UserAndPass'
+#     username: 'bob'
+#     password: '$(feedz-io-apikey)'
+#     url: 'https://f.feedz.io/nrjsolutions/release-apps'
+#     remotePath: 
+
+- task: AzureFileCopy@3
   inputs:
-    files: '$(Build.ArtifactStagingDirectory)/XboxFtpUploader.1.0.0.$(Build.BuildId).zip'
-    authType: 'UserAndPass'
-    username: 'bob'
-    password: '$(feedz-io-apikey)'
-    url: 'https://f.feedz.io/nrjsolutions/release-apps'
-    remotePath: 
+    SourcePath: '$(Build.ArtifactStagingDirectory)/XboxFtpUploader.1.0.0.$(Build.BuildId).zip'
+    azureSubscription: 'Visual Studio Professional with MSDN(17a33520-a372-4e0f-b2de-d5ee24faa7af)'
+    Destination: 'AzureBlob'
+    storage: 'nrjsolutions'
+    ContainerName: 'xboxftpuploader'
