@@ -40,7 +40,7 @@ steps:
     rootFolderOrFile: '$(Build.BinariesDirectory)'
     includeRootFolder: true
     archiveType: 'zip'
-    archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/XboxFtpUploader.1.0.0.$(Build.BuildId).zip'
     replaceExistingArchive: true
     verbose: true
 
@@ -48,4 +48,4 @@ steps:
   displayName: "Publish to Feedz.io"
   inputs:
     targetType: 'inline'
-    script: 'nuget.exe push -Source "https://f.feedz.io/nrjsolutions/release-apps/nuget" -ApiKey T-cMnriobHUiC7OM3xOLJ7BebH1IXmU2kUGFM "$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip"'
+    script: 'nuget.exe push -Source "https://f.feedz.io/nrjsolutions/release-apps/nuget" -ApiKey $(feedz-io-apikey) "$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip"'
