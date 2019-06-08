@@ -52,4 +52,4 @@ steps:
 - task: PowerShell@2
   inputs:
     targetType: 'inline'
-    script: 'nuget.exe push -Source "https://f.feedz.io/nrjsolutions/release-apps/nuget" -ApiKey T-azoHF9mSz3msbKgVNykgFAANGGJCmhhkQAE "$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip"'
+    script: 'nuget.exe push -Source "https://f.feedz.io/nrjsolutions/release-apps/nuget" -ApiKey T-cMnriobHUiC7OM3xOLJ7BebH1IXmU2kUGFM "$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip"'
