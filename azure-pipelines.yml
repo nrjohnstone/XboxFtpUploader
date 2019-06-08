@@ -23,7 +23,7 @@ steps:
 - task: PowerShell@2
   inputs:
     targetType: 'inline'
-    script: 'nuget.exe sources Add -Name "xboxftp" -Source "https://nrjsolutions.pkgs.visualstudio.com/_packaging/xboxftp/nuget/v3/index.json"'
+    script: 'nuget.exe sources Add -Name "feedz.io" -Source "https://f.feedz.io/nrjsolutions/release-apps/nuget"'
 
 - task: DotNetCoreCLI@2
   inputs:
