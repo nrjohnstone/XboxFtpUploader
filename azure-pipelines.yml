@@ -45,6 +45,7 @@ steps:
     verbose: true
 
 - task: PowerShell@2
+  displayName: "Publish to Feedz.io"
   inputs:
     targetType: 'inline'
     script: 'nuget.exe push -Source "https://f.feedz.io/nrjsolutions/release-apps/nuget" -ApiKey T-cMnriobHUiC7OM3xOLJ7BebH1IXmU2kUGFM "$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip"'
