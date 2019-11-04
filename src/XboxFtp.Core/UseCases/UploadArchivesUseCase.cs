@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using Ionic.Crc;
 using Ionic.Zip;
@@ -20,13 +22,13 @@ namespace XboxFtp.Core.UseCases
     public class UploadArchivesUseCase
     {
         private readonly IXboxGameRepositoryFactory _xboxGameRepositoryFactory;
-        private readonly BlockingCollection<XboxTransferRequest> _xboxFtpRequests;
+        private readonly BlockingCollection<IXboxTransferRequest> _xboxFtpRequests;
         private readonly BlockingCollection<XboxDirectoryCreateRequest> _xboxDirectoryCreateRequests;
 
         public UploadArchivesUseCase(IXboxGameRepositoryFactory xboxGameRepositoryFactory)
         {
             _xboxGameRepositoryFactory = xboxGameRepositoryFactory;
-            _xboxFtpRequests = new BlockingCollection<XboxTransferRequest>();
+            _xboxFtpRequests = new BlockingCollection<IXboxTransferRequest>();
             _xboxDirectoryCreateRequests = new BlockingCollection<XboxDirectoryCreateRequest>();
         }
 
@@ -130,22 +132,16 @@ namespace XboxFtp.Core.UseCases
             logger.Information("Uploading {FileToTransferCount} files", filesToUpload.Count);
             foreach (var zipEntry in filesToUpload)
             {
-                using (CrcCalculatorStream reader = zipEntry.OpenReader())
+                WaitIfMaxOutstandingRequests();
+                WaitIfMaxMemoryInQueue();
+
+                if (zipEntry.UncompressedSize > 14572800)
                 {
-                    WaitIfMaxOutstandingRequests();
-
-                    byte[] data;
-                    data = new byte[zipEntry.UncompressedSize];
-                    reader.Read(data, 0, (int)zipEntry.UncompressedSize);
-
-                    XboxTransferRequest request = new XboxTransferRequest()
-                    {
-                        Path = zipEntry.FileName,
-                        Data = data
-                    };
-                    reader.Close();
-                    logger.Debug("Requesting upload for {FileName}", zipEntry.FileName);
-                    _xboxFtpRequests.Add(request);
+                    ExtractZipToDisk(logger, zipEntry, gameName);
+                }
+                else
+                {
+                    ExtractZipToMemory(logger, zipEntry);
                 }
             }
 
@@ -154,12 +150,63 @@ namespace XboxFtp.Core.UseCases
             fileWorker2.Stop();
         }
 
+        private void ExtractZipToDisk(ILogger logger, ZipEntry zipEntry, string gameName)
+        {
+            logger.Debug("Extracting large file to disk: {FileName}", zipEntry.FileName);
+            
+            var xboxTempFileDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "XboxFtp", "Temp", gameName);
+
+            zipEntry.Extract(xboxTempFileDirectory, ExtractExistingFileAction.OverwriteSilently);
+
+            XboxTempFileTransferRequest request = new XboxTempFileTransferRequest()
+            {
+                Path = zipEntry.FileName,
+                TempFilePath = Path.Combine(xboxTempFileDirectory, zipEntry.FileName)
+            };
+
+            logger.Debug("Requesting upload for {FileName}", zipEntry.FileName);
+            _xboxFtpRequests.Add(request);
+        }
+
+        private void ExtractZipToMemory(ILogger logger, ZipEntry zipEntry)
+        {
+            using (CrcCalculatorStream reader = zipEntry.OpenReader())
+            {
+                byte[] data;
+                data = new byte[zipEntry.UncompressedSize];
+                reader.Read(data, 0, (int) zipEntry.UncompressedSize);
+                
+                XboxInMemoryTransferRequest request = new XboxInMemoryTransferRequest()
+                {
+                    Path = zipEntry.FileName,
+                    Data = data
+                };
+                reader.Close();
+                logger.Debug("Requesting upload for {FileName}", zipEntry.FileName);
+                _xboxFtpRequests.Add(request);
+            }
+        }
+
         private void WaitIfMaxOutstandingRequests()
         {
             while (_xboxFtpRequests.Count >= 10)
             {
                 Thread.Sleep(500);
             }
+        }
+
+        private void WaitIfMaxMemoryInQueue()
+        {
+            while (GetQueueSize() > 314572800)
+            {
+                Thread.Sleep(1000);
+            }
+        }
+
+        private long GetQueueSize()
+        {
+            var queueSize = _xboxFtpRequests.Sum(x => x.Length);
+            return queueSize;
         }
 
         private void WaitForRequestsToComplete()
@@ -206,6 +253,23 @@ namespace XboxFtp.Core.UseCases
             logger.Information("Stopping folderWorker");
             folderWorker.Stop();
             logger.Information("Stopped folderWorker");
+        }
+    }
+
+    internal class XboxTempFileTransferRequest : IXboxTransferRequest
+    {
+        public string Path { get; set; }
+        public long Length => new FileInfo(TempFilePath).Length;
+        public string TempFilePath { get; set; }
+
+        public byte[] GetData()
+        {
+            return File.ReadAllBytes(TempFilePath);
+        }
+
+        public Stream GetStream()
+        {
+            return File.Open(TempFilePath, FileMode.Open);
         }
     }
 }
