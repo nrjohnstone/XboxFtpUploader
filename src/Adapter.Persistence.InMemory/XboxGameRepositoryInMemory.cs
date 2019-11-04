@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using XboxFtp.Core.Ports.Persistence;
 
@@ -28,6 +29,11 @@ namespace Adapter.Persistence.InMemory
         }
 
         public void Store(string gameName, string targetFilePath, byte[] data)
+        {
+            _data[$"{gameName}|{targetFilePath}"] = data.Length;
+        }
+
+        public void Store(string gameName, string targetFilePath, Stream data)
         {
             _data[$"{gameName}|{targetFilePath}"] = data.Length;
         }

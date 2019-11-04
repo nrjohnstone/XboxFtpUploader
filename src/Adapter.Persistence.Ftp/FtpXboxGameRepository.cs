@@ -75,10 +75,16 @@ namespace Adapter.Persistence.Ftp
             string gameRoot = Path.Combine(_ftpXboxSettings.GameRootDirectory, gameName);
             SetWorkingDirectory(gameRoot);
 
-            using (Stream stream = new MemoryStream(data))
-            {
-                _ftpClient.Upload(stream, targetFilePath);
-            }
+            _ftpClient.Upload(data, targetFilePath);
+        }
+
+        public void Store(string gameName, string targetFilePath, Stream data)
+        {
+            ValidateFtpClient();
+
+            string gameRoot = Path.Combine(_ftpXboxSettings.GameRootDirectory, gameName);
+            SetWorkingDirectory(gameRoot);
+            _ftpClient.Upload(data, targetFilePath);
         }
 
         public bool Exists(string gameName, string targetFilePath, long size)
