@@ -138,10 +138,12 @@ namespace XboxFtp.Core.UseCases
                 if (zipEntry.UncompressedSize > 14572800)
                 {
                     ExtractZipToDisk(logger, zipEntry, gameName);
+                    //StreamFromZip(logger, zipEntry);
                 }
                 else
                 {
                     ExtractZipToMemory(logger, zipEntry);
+                    //StreamFromZip(logger, zipEntry);
                 }
             }
 
@@ -185,6 +187,22 @@ namespace XboxFtp.Core.UseCases
                 logger.Debug("Requesting upload for {FileName}", zipEntry.FileName);
                 _xboxFtpRequests.Add(request);
             }
+        }
+
+        /// <summary>
+        /// This should work but there seems to be an issue with the stream being used in the ftp client implementation
+        /// </summary>
+        /// <param name="logger"></param>
+        /// <param name="zipEntry"></param>
+        private void StreamFromZip(ILogger logger, ZipEntry zipEntry)
+        {
+            XboxZipStreamTransferRequest request = new XboxZipStreamTransferRequest()
+            {
+                Path = zipEntry.FileName,
+                ZipEntry = zipEntry
+            };
+            logger.Debug("Requesting upload for {FileName}", zipEntry.FileName);
+            _xboxFtpRequests.Add(request);
         }
 
         private void WaitIfMaxOutstandingRequests()
@@ -253,23 +271,6 @@ namespace XboxFtp.Core.UseCases
             logger.Information("Stopping folderWorker");
             folderWorker.Stop();
             logger.Information("Stopped folderWorker");
-        }
-    }
-
-    internal class XboxTempFileTransferRequest : IXboxTransferRequest
-    {
-        public string Path { get; set; }
-        public long Length => new FileInfo(TempFilePath).Length;
-        public string TempFilePath { get; set; }
-
-        public byte[] GetData()
-        {
-            return File.ReadAllBytes(TempFilePath);
-        }
-
-        public Stream GetStream()
-        {
-            return File.Open(TempFilePath, FileMode.Open);
         }
     }
 }

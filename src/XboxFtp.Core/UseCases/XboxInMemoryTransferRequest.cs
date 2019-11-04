@@ -17,12 +17,4 @@ namespace XboxFtp.Core.UseCases
 
         public byte[] Data { get; set; }
     }
-
-    public interface IXboxTransferRequest
-    {
-        string Path { get; }
-        long Length { get; }
-        byte[] GetData();
-        Stream GetStream();
-    }
 }
