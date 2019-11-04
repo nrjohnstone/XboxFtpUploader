@@ -29,4 +29,8 @@
     <ProjectReference Include="..\XboxFtp.Core\XboxFtp.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Properties\PublishProfiles\" />
+  </ItemGroup>
+
 </Project>
