@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using Serilog;
 using XboxFtp.Core.Ports.Notification;
+using XboxFtp.Core.UseCases;
 
 namespace XboxFtp.Console
 {
@@ -20,12 +21,12 @@ namespace XboxFtp.Console
 
         public void GameAddedToUploadQueue(string gameName)
         {
-            _logger.Information("{gameName} added to upload queue", gameName);
+            _logger.Information("{Game} added to upload queue", gameName);
         }
 
         public void StartingGameUpload(string gameName)
         {
-            _logger.Information("Starting upload of {gameName}", gameName);
+            _logger.Information("Starting upload of {Game}", gameName);
 
             var gameLogger = CreateNewLogger(gameName);
             _gameLogger.Add(gameName, gameLogger);
@@ -40,6 +41,66 @@ namespace XboxFtp.Console
         public void GameUploadError(string gameName, Exception ex, string errorMessage)
         {
             _gameLogger[gameName].Error(ex, errorMessage);
+        }
+
+        public void ReportTotalFilesToTransfer(string gameName, int count)
+        {
+            _gameLogger[gameName].Information("Uploading {FileToTransferCount} files", count);
+        }
+
+        public void ExtractFileToDisk(string gameName, string fileName)
+        {
+            _gameLogger[gameName].Debug("Extracting large file to disk: {FileName}", fileName);
+        }
+
+        public void AddingToUploadQueue(string gameName, string fileName)
+        {
+            _gameLogger[gameName].Debug("Requesting upload for {FileName}", fileName);
+        }
+
+        public void CreateFolderStructure(string gameName)
+        {
+            _gameLogger[gameName].Information("Creating folder structure for {Game}", gameName);
+        }
+
+        public void FinishedCreatingFolderStructure(string gameName)
+        {
+            _gameLogger[gameName].Information("All directories created");
+        }
+
+        public void CheckingForUploadedFiles(string gameName)
+        {
+            _gameLogger[gameName].Information("Checking for already uploaded files");
+        }
+
+        public void CheckingForUploadedFile(string gameName, string fileName)
+        {
+            _gameLogger[gameName].Debug("Checking for {FileName}", fileName);
+        }
+
+        public void FileAlreadyExists(string gameName, string fileName)
+        {
+            _gameLogger[gameName].Debug("File {FileName} already exists, skipping", fileName);
+        }
+
+        public void WaitingForUploadsToComplete(string gameName)
+        {
+            _gameLogger[gameName].Debug("Waiting for uploads to complete");
+        }
+
+        public void ReportTotalBytesToUpload(string gameName, long totalBytesToUpload)
+        {
+            _gameLogger[gameName].Information("Total bytes to upload: {TotalBytesToUpload}", totalBytesToUpload);
+        }
+
+        public void FinishedFileUpload(string gameName, IXboxTransferRequest item, int percentComplete)
+        {
+            _gameLogger[gameName].Information("File uploaded. Percent complete: {percentComplete}", percentComplete);
+        }
+
+        public void StartingFileUpload(string gameName, string fileName)
+        {
+            _gameLogger[gameName].Information("Starting file upload. {FileName} ", fileName);
         }
 
         private ILogger CreateNewLogger(string gameName)

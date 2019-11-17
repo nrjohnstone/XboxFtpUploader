@@ -46,15 +46,14 @@ namespace XboxFtp.Core.UseCases
                 {
                     string gameName = GetGameNameFromPath(archivePath);
                     _notifier.StartingGameUpload(gameName);
-                    ILogger reportLogger = CreateNewLogger(gameName);
 
                     try
                     {
                         Stopwatch uploadDuration = Stopwatch.StartNew();
-                        var filesToUpload = GetFilesToUpload(gameName, archivePath, reportLogger);
+                        var filesToUpload = GetFilesToUpload(gameName, archivePath);
 
-                        CreateFolderStructure(gameName, archivePath, reportLogger);
-                        UploadAllFiles(gameName, filesToUpload, reportLogger);
+                        CreateFolderStructure(gameName, archivePath);
+                        UploadAllFiles(gameName, filesToUpload);
 
                         _notifier.FinishedGameUpload(gameName, uploadDuration.Elapsed);
                     }
@@ -79,27 +78,12 @@ namespace XboxFtp.Core.UseCases
             }
         }
 
-        private ILogger CreateNewLogger(string gameName)
-        {
-            string datePrefix = DateTime.Now.ToString("yyyyMMddhhmm");
-            var reportName = $"{datePrefix}-{gameName}.txt";
-            string filePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "XboxFtp", reportName);
-            
-            var logger = new LoggerConfiguration()
-                .WriteTo.Console()
-                .WriteTo.File(filePath)
-                .Enrich.FromLogContext()
-                .MinimumLevel.Debug()
-                .CreateLogger();
-            return logger;
-        }
-
         private static string GetGameNameFromPath(string archivePath)
         {
             return Path.GetFileNameWithoutExtension(archivePath);
         }
 
-        private List<ZipEntry> GetFilesToUpload(string gameName, string archivePath, ILogger logger)
+        private List<ZipEntry> GetFilesToUpload(string gameName, string archivePath)
         {
             IXboxGameRepository xboxGameRepository = _xboxGameRepositoryFactory.Create();
             xboxGameRepository.Connect();
@@ -110,20 +94,19 @@ namespace XboxFtp.Core.UseCases
             {
                 // Order files alphabetically
                 files = new Queue<ZipEntry>(zip.Where(entry => !entry.IsDirectory).OrderBy(entry => entry.FileName));
-
-                logger.Information("Checking for already uploaded files");
-
+                _notifier.CheckingForUploadedFiles(gameName);
+                
                 // Find the first file that does not exist on the xbox and resume uploading from that file
                 while (files.Count > 0)
                 {
                     var zipEntry = files.Peek();
 
-                    logger.Debug("Checking for {FileName}", zipEntry.FileName);
-
+                    _notifier.CheckingForUploadedFile(gameName, zipEntry.FileName);
+                    
                     if (xboxGameRepository.Exists(gameName, zipEntry.FileName, zipEntry.UncompressedSize))
                     {
                         files.Dequeue();
-                        logger.Debug("File {FileName} already exists, skipping", zipEntry.FileName);
+                        _notifier.FileAlreadyExists(gameName, zipEntry.FileName);
                         continue;
                     }
 
@@ -136,15 +119,24 @@ namespace XboxFtp.Core.UseCases
             return files.ToList();
         }
 
-        private void UploadAllFiles(string gameName, List<ZipEntry> filesToUpload, ILogger logger)
+        private void UploadAllFiles(string gameName, List<ZipEntry> filesToUpload)
         {
-            XboxTransferWorker fileWorker1 = new XboxTransferWorker(_xboxGameRepositoryFactory, gameName, _xboxFtpRequests);
-            XboxTransferWorker fileWorker2 = new XboxTransferWorker(_xboxGameRepositoryFactory, gameName, _xboxFtpRequests);
+            long totalSizeToUpload = filesToUpload.Sum(x => x.UncompressedSize);
+            ReportTotalBytesToUpload(gameName, totalSizeToUpload);
 
+            BlockingCollection<IXboxTransferRequest> finishedRequests = new BlockingCollection<IXboxTransferRequest>();
+
+            XboxTransferWorker fileWorker1 = new XboxTransferWorker(_xboxGameRepositoryFactory, gameName, _xboxFtpRequests, finishedRequests,_notifier);
+            XboxTransferWorker fileWorker2 = new XboxTransferWorker(_xboxGameRepositoryFactory, gameName, _xboxFtpRequests, finishedRequests, _notifier);
+            XboxTransferProgressWorker progressWorker = new XboxTransferProgressWorker(_xboxGameRepositoryFactory, gameName,_notifier, finishedRequests,
+                totalSizeToUpload);
+
+            progressWorker.Start();
             fileWorker1.Start();
             fileWorker2.Start();
 
-            logger.Information("Uploading {FileToTransferCount} files", filesToUpload.Count);
+            _notifier.ReportTotalFilesToTransfer(gameName, filesToUpload.Count);
+
             foreach (var zipEntry in filesToUpload)
             {
                 WaitIfMaxOutstandingRequests();
@@ -152,25 +144,29 @@ namespace XboxFtp.Core.UseCases
 
                 if (zipEntry.UncompressedSize > 14572800)
                 {
-                    ExtractZipToDisk(logger, zipEntry, gameName);
-                    //StreamFromZip(logger, zipEntry);
+                    ExtractZipToDisk(zipEntry, gameName);
                 }
                 else
                 {
-                    ExtractZipToMemory(logger, zipEntry);
-                    //StreamFromZip(logger, zipEntry);
+                    ExtractZipToMemory(zipEntry, gameName);
                 }
             }
 
+            _notifier.WaitingForUploadsToComplete(gameName);
             WaitForRequestsToComplete();
             fileWorker1.Stop();
             fileWorker2.Stop();
         }
 
-        private void ExtractZipToDisk(ILogger logger, ZipEntry zipEntry, string gameName)
+        private void ReportTotalBytesToUpload(string gameName, long totalBytesToUpload)
         {
-            logger.Debug("Extracting large file to disk: {FileName}", zipEntry.FileName);
-            
+            _notifier.ReportTotalBytesToUpload(gameName, totalBytesToUpload);
+        }
+
+        private void ExtractZipToDisk(ZipEntry zipEntry, string gameName)
+        {
+            _notifier.ExtractFileToDisk(gameName, zipEntry.FileName);
+
             var xboxTempFileDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "XboxFtp", "Temp", gameName);
 
             zipEntry.Extract(xboxTempFileDirectory, ExtractExistingFileAction.OverwriteSilently);
@@ -181,11 +177,11 @@ namespace XboxFtp.Core.UseCases
                 TempFilePath = Path.Combine(xboxTempFileDirectory, zipEntry.FileName)
             };
 
-            logger.Debug("Requesting upload for {FileName}", zipEntry.FileName);
+            _notifier.AddingToUploadQueue(gameName, zipEntry.FileName);
             _xboxFtpRequests.Add(request);
         }
 
-        private void ExtractZipToMemory(ILogger logger, ZipEntry zipEntry)
+        private void ExtractZipToMemory(ZipEntry zipEntry, string gameName)
         {
             using (CrcCalculatorStream reader = zipEntry.OpenReader())
             {
@@ -199,7 +195,7 @@ namespace XboxFtp.Core.UseCases
                     Data = data
                 };
                 reader.Close();
-                logger.Debug("Requesting upload for {FileName}", zipEntry.FileName);
+                _notifier.AddingToUploadQueue(gameName, zipEntry.FileName);
                 _xboxFtpRequests.Add(request);
             }
         }
@@ -258,13 +254,12 @@ namespace XboxFtp.Core.UseCases
                 Log.Information("Waiting for directories to be created. {UploadRequestsRemaining}", _xboxDirectoryCreateRequests.Count);
                 Thread.Sleep(1000);
             }
-            Log.Information("All directories created");
         }
 
-        private void CreateFolderStructure(string gameName, string archivePath, ILogger logger)
+        private void CreateFolderStructure(string gameName, string archivePath)
         {
-            logger.Information("Creating folder structure for {Game}", gameName);
-
+            _notifier.CreateFolderStructure(gameName);
+            
             using (ZipFile zip = ZipFile.Read(archivePath))
             {
                 var directories = zip.Where(entry => entry.IsDirectory);
@@ -283,9 +278,8 @@ namespace XboxFtp.Core.UseCases
             XboxDirectoryStructureWorker folderWorker = new XboxDirectoryStructureWorker(_xboxGameRepositoryFactory, gameName, _xboxDirectoryCreateRequests);
             folderWorker.Start();
             WaitForDirectoryRequestsToComplete();
-            logger.Information("Stopping folderWorker");
+            _notifier.FinishedCreatingFolderStructure(gameName);
             folderWorker.Stop();
-            logger.Information("Stopped folderWorker");
         }
     }
 }
