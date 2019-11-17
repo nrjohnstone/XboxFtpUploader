@@ -10,6 +10,7 @@ using System.Threading;
 using Ionic.Crc;
 using Ionic.Zip;
 using Serilog;
+using XboxFtp.Core.Ports.Notification;
 using XboxFtp.Core.Ports.Persistence;
 
 namespace XboxFtp.Core.UseCases
@@ -22,12 +23,15 @@ namespace XboxFtp.Core.UseCases
     public class UploadArchivesUseCase
     {
         private readonly IXboxGameRepositoryFactory _xboxGameRepositoryFactory;
+        private readonly IProgressNotifier _notifier;
         private readonly BlockingCollection<IXboxTransferRequest> _xboxFtpRequests;
         private readonly BlockingCollection<XboxDirectoryCreateRequest> _xboxDirectoryCreateRequests;
 
-        public UploadArchivesUseCase(IXboxGameRepositoryFactory xboxGameRepositoryFactory)
+        public UploadArchivesUseCase(IXboxGameRepositoryFactory xboxGameRepositoryFactory,
+            IProgressNotifier notifier)
         {
             _xboxGameRepositoryFactory = xboxGameRepositoryFactory;
+            _notifier = notifier;
             _xboxFtpRequests = new BlockingCollection<IXboxTransferRequest>();
             _xboxDirectoryCreateRequests = new BlockingCollection<XboxDirectoryCreateRequest>();
         }
@@ -36,9 +40,12 @@ namespace XboxFtp.Core.UseCases
         {
             try
             {
+                NotifyAllGames(archivePaths);
+
                 foreach (var archivePath in archivePaths)
                 {
                     string gameName = GetGameNameFromPath(archivePath);
+                    _notifier.StartingGameUpload(gameName);
                     ILogger reportLogger = CreateNewLogger(gameName);
 
                     try
@@ -49,18 +56,26 @@ namespace XboxFtp.Core.UseCases
                         CreateFolderStructure(gameName, archivePath, reportLogger);
                         UploadAllFiles(gameName, filesToUpload, reportLogger);
 
-                        reportLogger.Information("Total upload time: {TotalUploadTime} second",
-                            uploadDuration.Elapsed.TotalSeconds);
+                        _notifier.FinishedGameUpload(gameName, uploadDuration.Elapsed);
                     }
                     catch (Exception ex)
                     {
-                        reportLogger.Error(ex, $"An unhandled exception occurred while uploading archive for {gameName}");
+                        _notifier.GameUploadError(gameName, ex, $"An unhandled exception occurred while uploading archive for {gameName}");
                     }
                 }
             }
             catch (Exception ex)
             {
                 Log.Error(ex, "An unhandled exception occurred while uploading archives");
+            }
+        }
+
+        private void NotifyAllGames(List<string> archivePaths)
+        {
+            foreach (var archivePath in archivePaths)
+            {
+                string gameName = GetGameNameFromPath(archivePath);
+                _notifier.GameAddedToUploadQueue(gameName);
             }
         }
 

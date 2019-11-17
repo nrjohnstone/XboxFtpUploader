@@ -4,6 +4,7 @@ using System.IO;
 using Adapter.Persistence.Ftp;
 using Adapter.Persistence.InMemory;
 using Serilog;
+using Serilog.Core;
 using XboxFtp.Core.UseCases;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
@@ -21,6 +22,8 @@ namespace XboxFtp.Console
                 .WriteTo.Console()
                 .MinimumLevel.Debug()
                 .CreateLogger();
+
+            SerilogProgressNotifier notifier = new SerilogProgressNotifier(Log.Logger);
 
             ConfigurePaths();
 
@@ -41,7 +44,7 @@ namespace XboxFtp.Console
                     xboxGameRepositoryFactory = UseFtpAdapter(ftpXboxSettings);
                 }
 
-                UploadArchivesUseCase useCase = new UploadArchivesUseCase(xboxGameRepositoryFactory);
+                UploadArchivesUseCase useCase = new UploadArchivesUseCase(xboxGameRepositoryFactory, notifier);
 
                 if (ftpXboxSettings.GamesToUpload == null || ftpXboxSettings.GamesToUpload.Count == 0)
                 {
