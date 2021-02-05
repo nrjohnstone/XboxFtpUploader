@@ -35,3 +35,4 @@ tools/
 /publish/
 *.ncrunchsolution
 *_NCrunch_*
+/.idea/
