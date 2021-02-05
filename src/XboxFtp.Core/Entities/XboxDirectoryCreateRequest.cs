@@ -1,4 +1,4 @@
-﻿namespace XboxFtp.Core.UseCases
+﻿namespace XboxFtp.Core.Entities
 {
     public class XboxDirectoryCreateRequest
     {

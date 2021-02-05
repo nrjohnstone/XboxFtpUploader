@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "XboxFtp.Console": {
+      "commandName": "Project",
+      "commandLineArgs": "--GamesToUploadFile=\"C:\\Temp\\XboxUpload.txt\""
+    }
+  }
+}

@@ -1,4 +1,5 @@
 ﻿using System;
+using XboxFtp.Core.Entities;
 using XboxFtp.Core.UseCases;
 
 namespace XboxFtp.Core.Ports.Notification

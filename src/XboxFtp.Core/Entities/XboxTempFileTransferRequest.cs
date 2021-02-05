@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace XboxFtp.Core.UseCases
+namespace XboxFtp.Core.Entities
 {
     internal class XboxTempFileTransferRequest : IXboxTransferRequest
     {

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Threading;
+using XboxFtp.Core.Entities;
 
 namespace XboxFtp.Core.UseCases
 {

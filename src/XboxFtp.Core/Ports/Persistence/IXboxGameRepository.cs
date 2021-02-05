@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
+using System.Runtime.Serialization;
 
 namespace XboxFtp.Core.Ports.Persistence
 {
@@ -11,5 +13,27 @@ namespace XboxFtp.Core.Ports.Persistence
         void Store(string gameName, string targetFilePath, Stream data);
         bool Exists(string gameName, string targetFilePath, long size);
         void CreateDirectory(string targetDirectory);
+    }
+
+    [Serializable]
+    public class PersistenceException : Exception
+    {
+        public PersistenceException()
+        {
+        }
+
+        public PersistenceException(string message) : base(message)
+        {
+        }
+
+        public PersistenceException(string message, Exception inner) : base(message, inner)
+        {
+        }
+
+        protected PersistenceException(
+            SerializationInfo info,
+            StreamingContext context) : base(info, context)
+        {
+        }
     }
 }

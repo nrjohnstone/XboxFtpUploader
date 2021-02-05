@@ -2,7 +2,7 @@
 using Ionic.Crc;
 using Ionic.Zip;
 
-namespace XboxFtp.Core.UseCases
+namespace XboxFtp.Core.Entities
 {
     public class XboxZipStreamTransferRequest : IXboxTransferRequest
     {

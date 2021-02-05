@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Terminal.Gui" Version="1.0.0-pre.6" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\XboxFtp.Core\XboxFtp.Core.csproj" />
+  </ItemGroup>
+
+</Project>

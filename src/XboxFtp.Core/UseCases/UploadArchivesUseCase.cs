@@ -10,6 +10,7 @@ using System.Threading;
 using Ionic.Crc;
 using Ionic.Zip;
 using Serilog;
+using XboxFtp.Core.Entities;
 using XboxFtp.Core.Ports.Notification;
 using XboxFtp.Core.Ports.Persistence;
 

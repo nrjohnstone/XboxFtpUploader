@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using Serilog;
+using XboxFtp.Core.Entities;
 using XboxFtp.Core.Ports.Notification;
-using XboxFtp.Core.UseCases;
 
-namespace XboxFtp.Console
+namespace Adapter.Notifier.Serilog
 {
     public class SerilogProgressNotifier : IProgressNotifier
     {
@@ -115,6 +115,7 @@ namespace XboxFtp.Console
                 .Enrich.FromLogContext()
                 .MinimumLevel.Debug()
                 .CreateLogger();
+            
             return logger;
         }
     }

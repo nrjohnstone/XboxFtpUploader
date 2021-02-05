@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using Serilog;
+using XboxFtp.Core.Entities;
 using XboxFtp.Core.Ports.Notification;
 
 namespace XboxFtp.Core.UseCases

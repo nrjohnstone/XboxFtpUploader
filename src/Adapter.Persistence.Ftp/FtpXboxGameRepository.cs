@@ -22,7 +22,7 @@ namespace Adapter.Persistence.Ftp
             _ftpXboxSettings = ftpXboxSettings;
             _currentWorkingDirectory = "";
         }
-
+        
         public void Connect()
         {
             DateTime retryMaxTime = DateTime.Now + TimeSpan.FromSeconds(30);
@@ -38,8 +38,15 @@ namespace Adapter.Persistence.Ftp
                 }
                 catch (FtpCommandException ex)
                 {
-                    Serilog.Log.Warning(ex, "Unable to connect. Retrying");
-                    Thread.Sleep(2000);
+                    if (ex.IsTransient())
+                    {
+                        Serilog.Log.Warning(ex, "Unable to connect. Retrying");
+                        Thread.Sleep(2000);
+                    }
+                    else
+                    {
+                        throw;
+                    }
                 }
             }
 
@@ -52,6 +59,10 @@ namespace Adapter.Persistence.Ftp
             _ftpClient.Disconnect();
         }
 
+        /// <summary>
+        /// Create a directory under the GameRootDirectory location
+        /// </summary>
+        /// <param name="gameName">Name of directory to be created</param>
         public void CreateGame(string gameName)
         {
             ValidateFtpClient();
@@ -91,18 +102,18 @@ namespace Adapter.Persistence.Ftp
         {
             ValidateFtpClient();
 
-            string gameRoot = Path.Combine(_ftpXboxSettings.GameRootDirectory, gameName);
-            string path = Path.Combine(gameRoot, targetFilePath);
-
-            // For FileExist or GetObjectInfo to work, the current working directory must be the drive
-            // where the file exists
-            SetWorkingDirectory(_ftpXboxSettings.GameRootDirectory);
-            
-            // Due to a bug in the FluentFtp library, must convert \\ from Path.Combine to /
-            string newPath = ConvertPath(path);
-
             try
             {
+                string gameRoot = Path.Combine(_ftpXboxSettings.GameRootDirectory, gameName);
+                string path = Path.Combine(gameRoot, targetFilePath);
+
+                // For FileExist or GetObjectInfo to work, the current working directory must be the drive
+                // where the file exists
+                SetWorkingDirectory(_ftpXboxSettings.GameRootDirectory);
+
+                // Due to a bug in the FluentFtp library, must convert \\ from Path.Combine to /
+                string newPath = ConvertPath(path);
+
                 FtpListItem fileInfo = _ftpClient.GetObjectInfo(newPath);
 
                 if (fileInfo == null)
@@ -110,6 +121,14 @@ namespace Adapter.Persistence.Ftp
 
                 if (fileInfo.Size == size)
                     return true;
+            }
+            catch (FtpCommandException ex)
+            {
+                if (ex.CompletionCode == "550") // Failed to change directory
+                {
+                    return false;
+                }
+                throw new PersistenceException("Unhandled FTP exception", ex);
             }
             catch (Exception ex)
             {
@@ -138,6 +157,19 @@ namespace Adapter.Persistence.Ftp
             ValidateFtpClient();
 
             _ftpClient.CreateDirectory(targetDirectory);
+        }
+    }
+
+    internal static class FtpCommandExceptionExtensions
+    {
+        public static bool IsTransient(this FtpCommandException ex)
+        {
+            if (ex.CompletionCode == "530") // Authentication error
+            {
+                return false;
+            }
+
+            return true;
         }
     }
 }

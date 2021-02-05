@@ -1,21 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using Adapter.Notifier.Serilog;
+using Adapter.Notifier.TerminalGui;
 using Adapter.Persistence.Ftp;
 using Adapter.Persistence.InMemory;
 using Serilog;
 using Serilog.Core;
+using XboxFtp.Core.Ports.Notification;
 using XboxFtp.Core.UseCases;
-using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.NamingConventions;
 
 namespace XboxFtp.Console
 {
     class Program
     {
-        private static string _xboxSettingsDirectory;
-        private static string _xboxSettingsPath;
-
         static void Main(string[] args)
         {
             Log.Logger = new LoggerConfiguration()
@@ -23,49 +22,98 @@ namespace XboxFtp.Console
                 .MinimumLevel.Debug()
                 .CreateLogger();
 
-            SerilogProgressNotifier notifier = new SerilogProgressNotifier(Log.Logger);
+            SerilogProgressNotifier serilogNotifier = new SerilogProgressNotifier(Log.Logger);
+            TerminalGuiAdapter adapter = new TerminalGuiAdapter();
+            adapter.Initialize();
 
-            ConfigurePaths();
+            TerminalGuiProgressNotifier terminalGuiProgressNotifier = adapter.CreateNotifier();
+            
+            IProgressNotifier notifier = new ChainedProgressNotifier(new List<IProgressNotifier>()
+            {
+                terminalGuiProgressNotifier
+            });
 
             Log.Information("Starting XBox FTP Upload");
-
-            FtpXboxSettings ftpXboxSettings = LoadSettings();
+            
+            SettingsLoaderIni settingsLoader = new SettingsLoaderIni(args);
+            var settings = settingsLoader.Load();
 
             try
             {
                 IXboxGameRepositoryFactory xboxGameRepositoryFactory = null;
 
-                if (ftpXboxSettings.TestMode)
+                if (settings.TestMode)
                 {
                     xboxGameRepositoryFactory = UseInMemoryAdapter();
                 }
                 else
                 {
-                    xboxGameRepositoryFactory = UseFtpAdapter(ftpXboxSettings);
+                    FtpXboxSettings xboxFtpsettings = new FtpXboxSettings()
+                    {
+                        Host = settings.Host,
+                        Password = settings.Password,
+                        User = settings.User,
+                        Port = settings.Port,
+                        GameRootDirectory = settings.GameRootDirectory
+                    };
+                    
+                    xboxGameRepositoryFactory = UseFtpAdapter(xboxFtpsettings);
                 }
 
                 UploadArchivesUseCase useCase = new UploadArchivesUseCase(xboxGameRepositoryFactory, notifier);
-
-                if (ftpXboxSettings.GamesToUpload == null || ftpXboxSettings.GamesToUpload.Count == 0)
+                
+                List<string> gamesToUpload = new List<string>();
+                
+                if (!string.IsNullOrWhiteSpace(settings.GameToUpload))
                 {
-                    Log.Warning("Found no games configured in settings to upload");
+                    Log.Warning("Found single games for upload specified");
+                    gamesToUpload.Add(settings.GameToUpload);
+                }
+                else if (!string.IsNullOrWhiteSpace(settings.GamesToUploadFile))
+                {
+                    if (!File.Exists(settings.GamesToUploadFile))
+                    {
+                        Log.Warning("File specified in GameToUploadFile does not exist");
+                        adapter.Shutdown();
+                        Environment.Exit(-1);
+                    }
+
+                    gamesToUpload = File.ReadAllLines(settings.GamesToUploadFile).Select(x => RemoveSurroundingQuotes(x))
+                        .ToList();
+                }
+                else if (settings.GamesToUpload == null || settings.GamesToUpload.Count == 0)
+                {
+                    Log.Warning("Found no games configured to upload");
+                    adapter.Shutdown();
                     Environment.Exit(0);
                 }
-                useCase.Execute(ftpXboxSettings.GamesToUpload);
+                else
+                {
+                    gamesToUpload = settings.GamesToUpload;
+                }
+                
+                useCase.Execute(gamesToUpload);
             }
             catch (Exception ex)
             {
                 Log.Error(ex, "Unhandled exception occured");
+                adapter.Shutdown();
                 Environment.Exit(-1);
             }
 
             Log.Information("Finished XBox FTP Upload");
+            adapter.Shutdown();
             Environment.Exit(0);
+        }
+
+        private static string RemoveSurroundingQuotes(string s)
+        {
+            return s.Trim('"');
         }
 
         private static IXboxGameRepositoryFactory UseInMemoryAdapter()
         {
-            var factory = new XboxGameRepositoryFactory(new Dictionary<string, long>());
+            var factory = new XboxGameRepositoryFactory(new Dictionary<string, long>(), TimeSpan.FromMilliseconds(1000));
             return factory;
         }
 
@@ -76,39 +124,6 @@ namespace XboxFtp.Console
             IXboxGameRepositoryFactory xboxGameRepositoryFactory =
                 new FtpXboxGameRepositoryFactory(ftpClientFactory, ftpXboxSettings);
             return xboxGameRepositoryFactory;
-        }
-
-        private static void ConfigurePaths()
-        {
-            _xboxSettingsDirectory = Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "XboxFtp");
-            _xboxSettingsPath = Path.Join(_xboxSettingsDirectory, "settings.yaml");
-        }
-
-        private static FtpXboxSettings LoadSettings()
-        {
-            FtpXboxSettings ftpXboxSettings;
-
-            if (!Directory.Exists(_xboxSettingsDirectory))
-            {
-                Directory.CreateDirectory(_xboxSettingsDirectory);
-            }
-
-            if (!File.Exists(_xboxSettingsPath))
-            {
-                File.Copy("./local-template.yaml", _xboxSettingsPath);
-            }
-            
-            using (Stream stream = new FileStream(_xboxSettingsPath, FileMode.Open, FileAccess.Read))
-            {
-                TextReader input = new StreamReader(stream);
-                var deserializer = new DeserializerBuilder()
-                    .WithNamingConvention(new CamelCaseNamingConvention())
-                    .Build();
-
-                ftpXboxSettings = deserializer.Deserialize<FtpXboxSettings>(input);
-            }
-
-            return ftpXboxSettings;
         }
     }
 }

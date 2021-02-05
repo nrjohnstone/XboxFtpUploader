@@ -1,19 +1,22 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using XboxFtp.Core.Entities;
 using XboxFtp.Core.Ports.Notification;
 
 namespace XboxFtp.Core.UseCases
 {
-    internal class XboxTransferProgressWorker : XboxWorkerBase
+    internal class XboxTransferProgressWorker : WorkerBase
     {
+        private readonly string _gameName;
         private readonly IProgressNotifier _notifier;
         private readonly BlockingCollection<IXboxTransferRequest> _finishedRequests;
         private readonly long _totalBytesToUpload;
         private long _totalBytesUploaded;
 
         public XboxTransferProgressWorker(IXboxGameRepositoryFactory xboxGameRepositoryFactory, string gameName,
-            IProgressNotifier notifier, BlockingCollection<IXboxTransferRequest> finishedRequests, long totalBytesToUpload) : base(xboxGameRepositoryFactory, gameName)
+            IProgressNotifier notifier, BlockingCollection<IXboxTransferRequest> finishedRequests, long totalBytesToUpload)
         {
+            _gameName = gameName;
             _notifier = notifier;
             _finishedRequests = finishedRequests;
             _totalBytesToUpload = totalBytesToUpload;
@@ -34,7 +37,7 @@ namespace XboxFtp.Core.UseCases
 
             int percentComplete = (int) (((float) _totalBytesUploaded / (float) _totalBytesToUpload) * 100);
 
-            _notifier.FinishedFileUpload(GameName, item, percentComplete);
+            _notifier.FinishedFileUpload(_gameName, item, percentComplete);
         }
     }
 }

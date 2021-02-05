@@ -11,6 +11,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XboxFtp.Console", "src\Xbox
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XboxFtp.Core", "src\XboxFtp.Core\XboxFtp.Core.csproj", "{A3AA9769-67B6-4315-93BB-EF6FEA7C758C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Adapter.Persistence.Ftp.Tests.Integration", "test\Adapter.Persistence.Ftp.Tests.Integration\Adapter.Persistence.Ftp.Tests.Integration.csproj", "{D63780C6-94BD-4FD4-8328-3F04CEDC5436}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Adapter.Notifier.Serilog", "src\Adapter.Notifier.Serilog\Adapter.Notifier.Serilog.csproj", "{8C514482-47B8-471C-9E25-B32E9EF6B97F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Adapter.Notifier.TerminalGui", "src\Adapter.Notifier.TerminalGui\Adapter.Notifier.TerminalGui.csproj", "{308C2F7E-9C72-4D8D-B1FC-D2F8B0C10FC4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +39,18 @@ Global
 		{A3AA9769-67B6-4315-93BB-EF6FEA7C758C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A3AA9769-67B6-4315-93BB-EF6FEA7C758C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A3AA9769-67B6-4315-93BB-EF6FEA7C758C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D63780C6-94BD-4FD4-8328-3F04CEDC5436}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D63780C6-94BD-4FD4-8328-3F04CEDC5436}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D63780C6-94BD-4FD4-8328-3F04CEDC5436}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D63780C6-94BD-4FD4-8328-3F04CEDC5436}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8C514482-47B8-471C-9E25-B32E9EF6B97F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8C514482-47B8-471C-9E25-B32E9EF6B97F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8C514482-47B8-471C-9E25-B32E9EF6B97F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8C514482-47B8-471C-9E25-B32E9EF6B97F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{308C2F7E-9C72-4D8D-B1FC-D2F8B0C10FC4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{308C2F7E-9C72-4D8D-B1FC-D2F8B0C10FC4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{308C2F7E-9C72-4D8D-B1FC-D2F8B0C10FC4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{308C2F7E-9C72-4D8D-B1FC-D2F8B0C10FC4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
