@@ -1,0 +1,15 @@
+version: '3'
+
+services:
+
+  # https://hub.docker.com/r/panubo/vsftpd
+  xbox_ftp:
+    image: docker.io/panubo/vsftpd:latest
+    container_name: xbox-ftp
+    ports:
+      - "21:21"
+      - "4559-4564:4559-4564"
+    environment:            
+      - FTP_USER=xbox      
+      - FTP_PASSWORD=xbox
+      - FTP_CHOWN_ROOT=chown
