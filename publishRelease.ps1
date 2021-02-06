@@ -1,1 +1,1 @@
-dotnet publish -r win-x64 -c Release /p:PublishSingleFile=true
+dotnet publish -r win-x64 -c Release  -o ./artifacts/XboxFtp.Console /p:PublishSingleFile=true /p:PublishTrimmed=true .\src\XboxFtp.Console
