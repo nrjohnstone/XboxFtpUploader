@@ -32,10 +32,10 @@ namespace Adapter.Notifier.TerminalGui
             top.Add (win);
             
             // Add some controls, 
-            _currentGameLabel = new Label(new Rect(3,4, 40, 1));
+            _currentGameLabel = new Label(new Rect(3,4, 60, 1));
             _currentGamePercentCompleteLabel = new Label(new Rect(3,5, 20, 1));
-            _currentFileLabel = new Label(new Rect(3,6, 40, 1));
-            _statusLabel = new Label(new Rect(3, 15, 40, 1));
+            _currentFileLabel = new Label(new Rect(3,6, 60, 1));
+            _statusLabel = new Label(new Rect(3, 15, 80, 1));
             
             win.Add (
                 _currentGameLabel,

@@ -23,29 +23,46 @@ namespace Adapter.Notifier.TerminalGui
         
         public void GameAddedToUploadQueue(string gameName)
         {
-            _statusLabel.Text = $"Game added to upload queue : {gameName}";
-            Application.Refresh();
+            SetStatusText($"Game added to upload queue : {gameName}");
         }
 
         public void StartingGameUpload(string gameName)
         {
-            _currentGameLabel.Text = $"Current Game: {gameName}";
-            _currentGamePercentCompleteLabel.Text = "Complete: 0%";
-            _statusLabel.Text = $"Uploading game : {gameName}";
-            Application.Refresh();
+            SetGameText(gameName);
+            SetGamePercentCompleteText("0");
+            SetStatusText(gameName);
+        }
+
+        private void SetStatusText(string gameName)
+        {
+            Application.MainLoop.Invoke (() => {
+                _statusLabel.Text = $"Uploading game : {gameName}";
+            });
+        }
+
+        private void SetGamePercentCompleteText(string percent)
+        {
+            Application.MainLoop.Invoke (() => {
+                _currentGamePercentCompleteLabel.Text = $"Complete: {percent}%";
+            });
+        }
+
+        private void SetGameText(string gameName)
+        {
+            Application.MainLoop.Invoke (() => {
+                _currentGameLabel.Text = $"Current Game: {gameName}";
+            });
         }
 
         public void FinishedGameUpload(string gameName, TimeSpan totalUploadTime)
         {
-            _statusLabel.Text = $"Finished game upload : {gameName}";
-            _currentGamePercentCompleteLabel.Text = "Complete: 100%";
-            Application.Refresh();
+            SetStatusText($"Finished game upload : {gameName}");
+            SetGamePercentCompleteText("100");
         }
 
         public void GameUploadError(string gameName, Exception ex, string errorMessage)
         {
-            _statusLabel.Text = $"Error with game upload : {gameName}";
-            Application.Refresh();
+            SetStatusText($"Error with game upload : {gameName}");
         }
 
         public void ReportTotalFilesToTransfer(string gameName, int count)
@@ -62,24 +79,22 @@ namespace Adapter.Notifier.TerminalGui
 
         public void CreateFolderStructure(string gameName)
         {
-            _statusLabel.Text = $"Creating folder structure";
-            Application.Refresh();
+            SetStatusText("Creating folder structure");
         }
 
         public void FinishedCreatingFolderStructure(string gameName)
         {
-            _statusLabel.Text = $"";
-            Application.Refresh();
+            SetStatusText("");
         }
 
         public void CheckingForUploadedFiles(string gameName)
         {
-            _statusLabel.Text = $"Checking for uploaded files";
-            Application.Refresh();
+            SetStatusText("Checking for uploaded files");
         }
 
         public void CheckingForUploadedFile(string gameName, string fileName)
         {
+            SetStatusText($"Checking for uploaded files - {fileName}");
         }
 
         public void FileAlreadyExists(string gameName, string fileName)
@@ -96,15 +111,16 @@ namespace Adapter.Notifier.TerminalGui
 
         public void FinishedFileUpload(string gameName, IXboxTransferRequest item, int percentComplete)
         {
-            _currentGameLabel.Text = $"Current Game: {gameName}";
-            _currentGamePercentCompleteLabel.Text = $"Complete: {percentComplete}%";
-            Application.Refresh();
+            SetGameText($"Current Game: {gameName}");
+            SetGamePercentCompleteText($"{percentComplete}");
         }
 
         public void StartingFileUpload(string gameName, string itemPath)
         {
-            _currentFileLabel.Text = $"Current File: {itemPath}";
-            Application.Refresh();
+            Application.MainLoop.Invoke (() => {
+                _currentFileLabel.Text = $"Current File: {itemPath}";
+                _statusLabel.Text = "Uploading files";
+            });
         }
     }
 }
