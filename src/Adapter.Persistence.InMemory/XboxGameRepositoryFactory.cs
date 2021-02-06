@@ -20,7 +20,7 @@ namespace Adapter.Persistence.InMemory
 
         public IXboxGameRepository Create()
         {
-            return new XboxGameRepositoryInMemory(_data, _fileUploadDelay);
+            return new XboxGameRepositoryInMemory(_fileUploadDelay);
         }
     }
 }

@@ -17,6 +17,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Adapter.Notifier.Serilog", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Adapter.Notifier.TerminalGui", "src\Adapter.Notifier.TerminalGui\Adapter.Notifier.TerminalGui.csproj", "{308C2F7E-9C72-4D8D-B1FC-D2F8B0C10FC4}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{88EB2371-EC08-4357-9113-0535A6B5901F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XboxFtp.Core.Tests.Unit", "test\XboxFtp.Core.Tests.Unit\XboxFtp.Core.Tests.Unit.csproj", "{C845CA79-12C4-4733-A1A7-58F29AAF912E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,11 +55,18 @@ Global
 		{308C2F7E-9C72-4D8D-B1FC-D2F8B0C10FC4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{308C2F7E-9C72-4D8D-B1FC-D2F8B0C10FC4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{308C2F7E-9C72-4D8D-B1FC-D2F8B0C10FC4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C845CA79-12C4-4733-A1A7-58F29AAF912E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C845CA79-12C4-4733-A1A7-58F29AAF912E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C845CA79-12C4-4733-A1A7-58F29AAF912E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C845CA79-12C4-4733-A1A7-58F29AAF912E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A03E751D-A1E2-48C7-87B2-BF2C9C487D72}
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{C845CA79-12C4-4733-A1A7-58F29AAF912E} = {88EB2371-EC08-4357-9113-0535A6B5901F}
 	EndGlobalSection
 EndGlobal

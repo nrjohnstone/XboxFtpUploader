@@ -16,11 +16,6 @@ using XboxFtp.Core.Ports.Persistence;
 
 namespace XboxFtp.Core.UseCases
 {
-    public interface IXboxGameRepositoryFactory
-    {
-        IXboxGameRepository Create();
-    }
-
     public class UploadArchivesUseCase
     {
         private readonly IXboxGameRepositoryFactory _xboxGameRepositoryFactory;
@@ -84,24 +79,26 @@ namespace XboxFtp.Core.UseCases
             return Path.GetFileNameWithoutExtension(archivePath);
         }
 
-        private List<ZipEntry> GetFilesToUpload(string gameName, string archivePath)
+        private List<IZipEntry> GetFilesToUpload(string gameName, string archivePath)
         {
             IXboxGameRepository xboxGameRepository = _xboxGameRepositoryFactory.Create();
             xboxGameRepository.Connect();
             
-            Queue<ZipEntry> files;
+            Queue<IZipEntry> files;
 
             using (ZipFile zip = ZipFile.Read(archivePath))
             {
                 // Order files alphabetically
-                files = new Queue<ZipEntry>(zip.Where(entry => !entry.IsDirectory).OrderBy(entry => entry.FileName));
+                files = new Queue<IZipEntry>(zip.Where(entry => !entry.IsDirectory).Select(x => new ZipEntryWrapper(x)).OrderBy(entry => entry.FileName));
                 _notifier.CheckingForUploadedFiles(gameName);
                 
+                SequentialUploadResumeStrategy resumeStrategy = new SequentialUploadResumeStrategy(files, _notifier, gameName, xboxGameRepository);
                 // Find the first file that does not exist on the xbox and resume uploading from that file
+                // TODO NJ : Should probably do a binary search here as an xbox game could have hundreds of small files already uploaded
                 while (files.Count > 0)
                 {
-                    var zipEntry = files.Peek();
-
+                    IZipEntry zipEntry = files.Peek();
+                    
                     _notifier.CheckingForUploadedFile(gameName, zipEntry.FileName);
                     
                     if (xboxGameRepository.Exists(gameName, zipEntry.FileName, zipEntry.UncompressedSize))
@@ -120,7 +117,7 @@ namespace XboxFtp.Core.UseCases
             return files.ToList();
         }
 
-        private void UploadAllFiles(string gameName, List<ZipEntry> filesToUpload)
+        private void UploadAllFiles(string gameName, List<IZipEntry> filesToUpload)
         {
             long totalSizeToUpload = filesToUpload.Sum(x => x.UncompressedSize);
             ReportTotalBytesToUpload(gameName, totalSizeToUpload);
@@ -164,7 +161,7 @@ namespace XboxFtp.Core.UseCases
             _notifier.ReportTotalBytesToUpload(gameName, totalBytesToUpload);
         }
 
-        private void ExtractZipToDisk(ZipEntry zipEntry, string gameName)
+        private void ExtractZipToDisk(IZipEntry zipEntry, string gameName)
         {
             _notifier.ExtractFileToDisk(gameName, zipEntry.FileName);
 
@@ -182,9 +179,9 @@ namespace XboxFtp.Core.UseCases
             _xboxFtpRequests.Add(request);
         }
 
-        private void ExtractZipToMemory(ZipEntry zipEntry, string gameName)
+        private void ExtractZipToMemory(IZipEntry zipEntry, string gameName)
         {
-            using (CrcCalculatorStream reader = zipEntry.OpenReader())
+            using (Stream reader = zipEntry.OpenReader())
             {
                 byte[] data;
                 data = new byte[zipEntry.UncompressedSize];

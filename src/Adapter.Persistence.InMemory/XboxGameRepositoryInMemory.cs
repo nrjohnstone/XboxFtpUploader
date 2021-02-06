@@ -8,14 +8,19 @@ namespace Adapter.Persistence.InMemory
 {
     public class XboxGameRepositoryInMemory : IXboxGameRepository
     {
-        private readonly Dictionary<string, long> _data;
-        private readonly TimeSpan _fileUploadDelay;
-
-        public XboxGameRepositoryInMemory(Dictionary<string, long> data, TimeSpan fileUploadDelay)
+        private class XboxFileDto
         {
-            if (data == null) throw new ArgumentNullException(nameof(data));
-            _data = data;
-            _fileUploadDelay = fileUploadDelay;
+            public string FilePath { get; set; }
+            public long Size { get; set; }
+        }
+        
+        private readonly Dictionary<string, XboxFileDto> _data;
+        public TimeSpan FileUploadDelay { get; set; }
+
+        public XboxGameRepositoryInMemory(TimeSpan fileUploadDelay)
+        {
+            _data = new Dictionary<string, XboxFileDto>();
+            FileUploadDelay = fileUploadDelay;
         }
 
         public void Connect()
@@ -32,14 +37,24 @@ namespace Adapter.Persistence.InMemory
 
         public void Store(string gameName, string targetFilePath, byte[] data)
         {
-            _data[$"{gameName}|{targetFilePath}"] = data.Length;
-            Thread.Sleep(_fileUploadDelay);
+            _data[$"{gameName}|{targetFilePath}"] = new XboxFileDto()
+            {
+                FilePath = targetFilePath,
+                Size = data.Length
+            };
+            
+            Thread.Sleep(FileUploadDelay);
         }
 
         public void Store(string gameName, string targetFilePath, Stream data)
         {
-            _data[$"{gameName}|{targetFilePath}"] = data.Length;
-            Thread.Sleep(_fileUploadDelay);
+            _data[$"{gameName}|{targetFilePath}"] = new XboxFileDto()
+            {
+                FilePath = targetFilePath,
+                Size = data.Length
+            };
+            
+            Thread.Sleep(FileUploadDelay);
         }
 
         public bool Exists(string gameName, string targetFilePath, long size)
@@ -47,7 +62,7 @@ namespace Adapter.Persistence.InMemory
             if (!_data.ContainsKey($"{gameName}|{targetFilePath}"))
                 return false;
 
-            if (_data[$"{gameName}|{targetFilePath}"] == size)
+            if (_data[$"{gameName}|{targetFilePath}"].Size == size)
                 return true;
 
             return false;
