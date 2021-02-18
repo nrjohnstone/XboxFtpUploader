@@ -19,10 +19,10 @@ namespace XboxFtp.Console
             var configurationBuilder = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory());
 
-            AddDefaults(configurationBuilder);
-            AddEnvironmentVariables(configurationBuilder);
+            AddDefaults(configurationBuilder);            
             AddUserSettings(configurationBuilder);
-            
+            AddEnvironmentVariables(configurationBuilder);
+
             configurationBuilder.AddCommandLine(_args);
             
             var settings = new Settings();
@@ -35,7 +35,7 @@ namespace XboxFtp.Console
             var xboxSettingsDirectory = Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "XboxFtp");
             var xboxSettingsPath = Path.Join(xboxSettingsDirectory, "settings.ini");
             
-            configurationBuilder.AddIniFile(xboxSettingsPath, true);
+            configurationBuilder.AddIniFile(xboxSettingsPath, optional: true);
         }
 
         private static void AddEnvironmentVariables(IConfigurationBuilder configurationBuilder)

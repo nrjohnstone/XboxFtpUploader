@@ -7,7 +7,7 @@ using Adapter.Notifier.TerminalGui;
 using Adapter.Persistence.Ftp;
 using Adapter.Persistence.InMemory;
 using Serilog;
-using Serilog.Core;
+using XboxFtp.Console.Configuration.Logging;
 using XboxFtp.Core.Ports.Notification;
 using XboxFtp.Core.UseCases;
 
@@ -17,10 +17,12 @@ namespace XboxFtp.Console
     {
         static void Main(string[] args)
         {
-            Log.Logger = new LoggerConfiguration()
-                .WriteTo.Console()
-                .MinimumLevel.Debug()
-                .CreateLogger();
+            SettingsLoaderIni settingsLoader = new SettingsLoaderIni(args);
+            var settings = settingsLoader.Load();
+
+            Log.Logger = SerilogConfiguration.Create("XboxFtpUpload", settings).CreateLogger();
+
+            Log.Information("Starting XBox FTP Upload");
 
             SerilogProgressNotifier serilogNotifier = new SerilogProgressNotifier(Log.Logger);
             TerminalGuiAdapter adapter = new TerminalGuiAdapter();
@@ -32,12 +34,7 @@ namespace XboxFtp.Console
             {
                 terminalGuiProgressNotifier
             });
-
-            Log.Information("Starting XBox FTP Upload");
             
-            SettingsLoaderIni settingsLoader = new SettingsLoaderIni(args);
-            var settings = settingsLoader.Load();
-
             try
             {
                 IXboxGameRepositoryFactory xboxGameRepositoryFactory = null;
