@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Ionic.Zip;
-using XboxFtp.Core.Entities;
 using XboxFtp.Core.Ports.Notification;
 using XboxFtp.Core.Ports.Persistence;
 
-namespace XboxFtp.Core.UseCases
+namespace XboxFtp.Core.Entities
 {
     /// <summary>
     /// A resume strategy for uploading files that checks the files sequentially
@@ -14,12 +12,12 @@ namespace XboxFtp.Core.UseCases
     /// </summary>
     public class SequentialUploadResumeStrategy : IUploadResumeStrategy
     {
-        private readonly Queue<IZipEntry> _filesToCheck;
+        private readonly IList<IZipEntry> _filesToCheck;
         private readonly IProgressNotifier _notifier;
         private readonly string _gameName;
         private readonly IXboxGameRepository _xboxGameRepository;
 
-        public SequentialUploadResumeStrategy(Queue<IZipEntry> filesToCheck, IProgressNotifier notifier, string gameName, IXboxGameRepository xboxGameRepository)
+        public SequentialUploadResumeStrategy(IList<IZipEntry> filesToCheck, IProgressNotifier notifier, string gameName, IXboxGameRepository xboxGameRepository)
         {
             if (filesToCheck == null) throw new ArgumentNullException(nameof(filesToCheck));
             if (notifier == null) throw new ArgumentNullException(nameof(notifier));
@@ -33,24 +31,27 @@ namespace XboxFtp.Core.UseCases
 
         public IList<IZipEntry> GetRemainingFiles()
         {
-            // Find the first file that does not exist on the xbox with the same size and resume uploading from that file
-            while (_filesToCheck.Count > 0)
+            var filesToCheck = _filesToCheck.ToList();
+            int filesExistCount = 0;
+            
+            for (int i = 0; i < filesToCheck.Count(); i++)
             {
-                IZipEntry zipEntry = _filesToCheck.Peek();
-                    
+                IZipEntry zipEntry = filesToCheck[i];
+                
                 _notifier.CheckingForUploadedFile(_gameName, zipEntry.FileName);
                     
-                if (_xboxGameRepository.Exists(_gameName, zipEntry.FileName, zipEntry.UncompressedSize))
+                if (!_xboxGameRepository.Exists(_gameName, zipEntry.FileName, zipEntry.UncompressedSize))
                 {
-                    _filesToCheck.Dequeue();
-                    _notifier.FileAlreadyExists(_gameName, zipEntry.FileName);
-                    continue;
+                    break;
                 }
-
-                break;
+                
+                filesExistCount++;
+                _notifier.FileAlreadyExists(_gameName, zipEntry.FileName);
             }
+            
+            filesToCheck.RemoveRange(0, filesExistCount);
 
-            return _filesToCheck.ToList();
+            return filesToCheck;
         }
     }
 }

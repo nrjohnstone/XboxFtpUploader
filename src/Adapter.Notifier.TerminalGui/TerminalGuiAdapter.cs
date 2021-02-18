@@ -81,7 +81,7 @@ namespace Adapter.Notifier.TerminalGui
         public void Shutdown()
         {
             Application.RequestStop();
-            Application.Shutdown();
+            //Application.Shutdown();
             _thread.Join(TimeSpan.FromSeconds(2));
         }
     }

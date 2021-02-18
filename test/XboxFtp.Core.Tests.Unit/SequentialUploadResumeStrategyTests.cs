@@ -1,10 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using Adapter.Persistence.InMemory;
 using FluentAssertions;
-using Ionic.Zip;
 using XboxFtp.Core.Entities;
 using XboxFtp.Core.Ports.Notification;
 using XboxFtp.Core.Ports.Persistence;
@@ -13,21 +11,6 @@ using Xunit;
 
 namespace XboxFtp.Core.Tests.Unit
 {
-    internal class ZipFileFake : IZipEntry
-    {
-        public string FileName { get; set; }
-        public long UncompressedSize { get; set; }
-        
-        public void Extract(string baseDirectory, ExtractExistingFileAction extractExistingFileAction)
-        {
-        }
-
-        public Stream OpenReader()
-        {
-            return new MemoryStream();
-        }
-    }
-    
     public class SequentialUploadResumeStrategyTests
     {
         private readonly IProgressNotifier _notifier;
@@ -39,7 +22,7 @@ namespace XboxFtp.Core.Tests.Unit
             _xboxGameRepository = new XboxGameRepositoryInMemory(TimeSpan.FromMilliseconds(10));
         }
         
-        private SequentialUploadResumeStrategy CreateSut(Queue<IZipEntry> filesToCheck, string gameName = "TestGame")
+        private SequentialUploadResumeStrategy CreateSut(IList<IZipEntry> filesToCheck, string gameName = "TestGame")
         {
             return new SequentialUploadResumeStrategy(filesToCheck, _notifier, gameName, _xboxGameRepository);
         }
@@ -47,10 +30,10 @@ namespace XboxFtp.Core.Tests.Unit
         [Fact]
         public void WhenNoFilesExistOnTargetXbox_ShouldReturnAllFilesAsRemaining()
         {
-            Queue<IZipEntry> filesToCheck = new Queue<IZipEntry>();
-            filesToCheck.Enqueue(new ZipFileFake() { FileName = "TestFile1"});
-            filesToCheck.Enqueue(new ZipFileFake() { FileName = "TestFile2"});
-            filesToCheck.Enqueue(new ZipFileFake() { FileName = "TestFile3"});
+            IList<IZipEntry> filesToCheck = new List<IZipEntry>();
+            filesToCheck.Add(new ZipFileFake() { FileName = "TestFile1"});
+            filesToCheck.Add(new ZipFileFake() { FileName = "TestFile2"});
+            filesToCheck.Add(new ZipFileFake() { FileName = "TestFile3"});
             
             var sut = CreateSut(filesToCheck);
 
@@ -65,10 +48,10 @@ namespace XboxFtp.Core.Tests.Unit
         [Fact]
         public void WhenFirstFileExistOnTargetXbox_AndIsTheSameSize_ShouldRemoveFileFromFilesAsRemaining()
         {
-            Queue<IZipEntry> filesToCheck = new Queue<IZipEntry>();
-            filesToCheck.Enqueue(new ZipFileFake() { FileName = "TestFile1", UncompressedSize = 4});
-            filesToCheck.Enqueue(new ZipFileFake() { FileName = "TestFile2", UncompressedSize = 4});
-            filesToCheck.Enqueue(new ZipFileFake() { FileName = "TestFile3", UncompressedSize = 4});
+            IList<IZipEntry> filesToCheck = new List<IZipEntry>();
+            filesToCheck.Add(new ZipFileFake() { FileName = "TestFile1", UncompressedSize = 4});
+            filesToCheck.Add(new ZipFileFake() { FileName = "TestFile2", UncompressedSize = 4});
+            filesToCheck.Add(new ZipFileFake() { FileName = "TestFile3", UncompressedSize = 4});
             
             var sut = CreateSut(filesToCheck);
             _xboxGameRepository.Store("TestGame", "TestFile1", new byte[] { 1,2,3,4});
@@ -85,10 +68,10 @@ namespace XboxFtp.Core.Tests.Unit
         [Fact]
         public void WhenFirstFileExistOnTargetXbox_AndIsNotTheSameSize_ShouldIncludeFileFromFilesAsRemaining()
         {
-            Queue<IZipEntry> filesToCheck = new Queue<IZipEntry>();
-            filesToCheck.Enqueue(new ZipFileFake() { FileName = "TestFile1", UncompressedSize = 8});
-            filesToCheck.Enqueue(new ZipFileFake() { FileName = "TestFile2", UncompressedSize = 4});
-            filesToCheck.Enqueue(new ZipFileFake() { FileName = "TestFile3", UncompressedSize = 4});
+            IList<IZipEntry> filesToCheck = new List<IZipEntry>();
+            filesToCheck.Add(new ZipFileFake() { FileName = "TestFile1", UncompressedSize = 8});
+            filesToCheck.Add(new ZipFileFake() { FileName = "TestFile2", UncompressedSize = 4});
+            filesToCheck.Add(new ZipFileFake() { FileName = "TestFile3", UncompressedSize = 4});
             
             var sut = CreateSut(filesToCheck);
             _xboxGameRepository.Store("TestGame", "TestFile1", new byte[] { 1,2,3,4});

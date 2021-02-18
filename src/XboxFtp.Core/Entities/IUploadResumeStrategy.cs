@@ -1,8 +1,6 @@
 ﻿using System.Collections.Generic;
-using Ionic.Zip;
-using XboxFtp.Core.Entities;
 
-namespace XboxFtp.Core.UseCases
+namespace XboxFtp.Core.Entities
 {
     public interface IUploadResumeStrategy
     {

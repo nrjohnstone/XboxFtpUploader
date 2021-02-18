@@ -79,45 +79,30 @@ namespace XboxFtp.Core.UseCases
             return Path.GetFileNameWithoutExtension(archivePath);
         }
 
-        private List<IZipEntry> GetFilesToUpload(string gameName, string archivePath)
+        private IList<IZipEntry> GetFilesToUpload(string gameName, string archivePath)
         {
             IXboxGameRepository xboxGameRepository = _xboxGameRepositoryFactory.Create();
             xboxGameRepository.Connect();
-            
-            Queue<IZipEntry> files;
 
+            IList<IZipEntry> filesToUpload; 
+            
             using (ZipFile zip = ZipFile.Read(archivePath))
             {
-                // Order files alphabetically
-                files = new Queue<IZipEntry>(zip.Where(entry => !entry.IsDirectory).Select(x => new ZipEntryWrapper(x)).OrderBy(entry => entry.FileName));
+                // Order files alphabetically to ensure we can resume interrupted uploads
+                var files = new List<IZipEntry>(zip.Where(entry => !entry.IsDirectory).Select(x => new ZipEntryWrapper(x)).OrderBy(entry => entry.FileName));
                 _notifier.CheckingForUploadedFiles(gameName);
                 
-                SequentialUploadResumeStrategy resumeStrategy = new SequentialUploadResumeStrategy(files, _notifier, gameName, xboxGameRepository);
-                // Find the first file that does not exist on the xbox and resume uploading from that file
-                // TODO NJ : Should probably do a binary search here as an xbox game could have hundreds of small files already uploaded
-                while (files.Count > 0)
-                {
-                    IZipEntry zipEntry = files.Peek();
-                    
-                    _notifier.CheckingForUploadedFile(gameName, zipEntry.FileName);
-                    
-                    if (xboxGameRepository.Exists(gameName, zipEntry.FileName, zipEntry.UncompressedSize))
-                    {
-                        files.Dequeue();
-                        _notifier.FileAlreadyExists(gameName, zipEntry.FileName);
-                        continue;
-                    }
-
-                    break;
-                }
+                IUploadResumeStrategy uploadResumeStrategy = new BinarySearchUploadResumeStrategy(files, _notifier, gameName, xboxGameRepository);
+                
+                filesToUpload = uploadResumeStrategy.GetRemainingFiles();
             }
 
             xboxGameRepository.Disconnect();
 
-            return files.ToList();
+            return filesToUpload;
         }
 
-        private void UploadAllFiles(string gameName, List<IZipEntry> filesToUpload)
+        private void UploadAllFiles(string gameName, IList<IZipEntry> filesToUpload)
         {
             long totalSizeToUpload = filesToUpload.Sum(x => x.UncompressedSize);
             ReportTotalBytesToUpload(gameName, totalSizeToUpload);

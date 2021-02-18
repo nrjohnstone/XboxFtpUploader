@@ -11,15 +11,15 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XboxFtp.Console", "src\Xbox
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XboxFtp.Core", "src\XboxFtp.Core\XboxFtp.Core.csproj", "{A3AA9769-67B6-4315-93BB-EF6FEA7C758C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Adapter.Persistence.Ftp.Tests.Integration", "test\Adapter.Persistence.Ftp.Tests.Integration\Adapter.Persistence.Ftp.Tests.Integration.csproj", "{D63780C6-94BD-4FD4-8328-3F04CEDC5436}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Adapter.Persistence.Ftp.Tests.Integration", "test\Adapter.Persistence.Ftp.Tests.Integration\Adapter.Persistence.Ftp.Tests.Integration.csproj", "{D63780C6-94BD-4FD4-8328-3F04CEDC5436}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Adapter.Notifier.Serilog", "src\Adapter.Notifier.Serilog\Adapter.Notifier.Serilog.csproj", "{8C514482-47B8-471C-9E25-B32E9EF6B97F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Adapter.Notifier.Serilog", "src\Adapter.Notifier.Serilog\Adapter.Notifier.Serilog.csproj", "{8C514482-47B8-471C-9E25-B32E9EF6B97F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Adapter.Notifier.TerminalGui", "src\Adapter.Notifier.TerminalGui\Adapter.Notifier.TerminalGui.csproj", "{308C2F7E-9C72-4D8D-B1FC-D2F8B0C10FC4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Adapter.Notifier.TerminalGui", "src\Adapter.Notifier.TerminalGui\Adapter.Notifier.TerminalGui.csproj", "{308C2F7E-9C72-4D8D-B1FC-D2F8B0C10FC4}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{88EB2371-EC08-4357-9113-0535A6B5901F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XboxFtp.Core.Tests.Unit", "test\XboxFtp.Core.Tests.Unit\XboxFtp.Core.Tests.Unit.csproj", "{C845CA79-12C4-4733-A1A7-58F29AAF912E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XboxFtp.Core.Tests.Unit", "test\XboxFtp.Core.Tests.Unit\XboxFtp.Core.Tests.Unit.csproj", "{C845CA79-12C4-4733-A1A7-58F29AAF912E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -63,10 +63,11 @@ Global
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{D63780C6-94BD-4FD4-8328-3F04CEDC5436} = {88EB2371-EC08-4357-9113-0535A6B5901F}
+		{C845CA79-12C4-4733-A1A7-58F29AAF912E} = {88EB2371-EC08-4357-9113-0535A6B5901F}
+	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A03E751D-A1E2-48C7-87B2-BF2C9C487D72}
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{C845CA79-12C4-4733-A1A7-58F29AAF912E} = {88EB2371-EC08-4357-9113-0535A6B5901F}
 	EndGlobalSection
 EndGlobal
