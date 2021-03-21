@@ -64,15 +64,24 @@ namespace XboxFtp.Core.UseCases
                             var filesInArchive = GetAllFilesInArchive(gameName, archivePath);
                             long totalSizeOfArchive = filesInArchive.Sum(x => x.UncompressedSize);
                             
-                            var filesToUpload = GetFilesToUpload(gameName, archivePath);
-                            long totalSizeFilesToUpload = filesToUpload.Sum(x => x.UncompressedSize);
+                            var uploadResumeReport = GetFilesToUpload(gameName, archivePath);
+                            long totalSizeFilesToUpload = uploadResumeReport.RemainingFiles.Sum(x => x.UncompressedSize);
 
                             Log.ForContext("TotalUncompressedSize", totalSizeOfArchive)
                                 .ForContext("FilesToUploadUncompressedSize", totalSizeFilesToUpload)
                                 .Information("Calculated uncompressed size of files to upload");
+
+                            // Only create the folder structure if we didn't find any files uploaded
+                            if (uploadResumeReport.SizeUploaded == 0)
+                            {
+                                CreateFolderStructure(gameName, archivePath);    
+                            }
+                            else
+                            {
+                                _notifier.SkipCreateFolderStructure(gameName);
+                            }
                             
-                            CreateFolderStructure(gameName, archivePath);
-                            UploadAllFiles(gameName, filesToUpload);
+                            UploadAllFiles(gameName, uploadResumeReport);
                             
                             Log.ForContext("DurationMs",uploadDuration.ElapsedMilliseconds).Information("Upload finished");
                             _notifier.FinishedGameUpload(gameName, uploadDuration.Elapsed);
@@ -115,12 +124,12 @@ namespace XboxFtp.Core.UseCases
             }
         }
         
-        private IList<IZipEntry> GetFilesToUpload(string gameName, string archivePath)
+        private UploadResumeReport GetFilesToUpload(string gameName, string archivePath)
         {
             IXboxGameRepository xboxGameRepository = _xboxGameRepositoryFactory.Create();
             xboxGameRepository.Connect();
 
-            IList<IZipEntry> filesToUpload; 
+            UploadResumeReport uploadResumeReport = null;
             
             using (IZipFile zip = _zipFileProcessor.Read(archivePath))
             {
@@ -131,18 +140,18 @@ namespace XboxFtp.Core.UseCases
                 
                 IUploadResumeStrategy uploadResumeStrategy = new BinarySearchUploadResumeStrategy(files, _notifier, gameName, xboxGameRepository);
 
-                var uploadResumeReport = uploadResumeStrategy.GetRemainingFiles();
-                filesToUpload = uploadResumeReport.RemainingFiles;
+                uploadResumeReport = uploadResumeStrategy.GetRemainingFiles();
             }
 
             xboxGameRepository.Disconnect();
 
-            return filesToUpload;
+            return uploadResumeReport;
         }
 
-        private void UploadAllFiles(string gameName, IList<IZipEntry> filesToUpload)
+        private void UploadAllFiles(string gameName, UploadResumeReport uploadResumeReport)
         {
-            long totalSizeToUpload = filesToUpload.Sum(x => x.UncompressedSize);
+            long totalSizeToUpload = uploadResumeReport.RemainingFiles.Sum(x => x.UncompressedSize);
+            
             ReportTotalBytesToUpload(gameName, totalSizeToUpload);
 
             BlockingCollection<IXboxTransferRequest> finishedRequests = new BlockingCollection<IXboxTransferRequest>();
@@ -150,15 +159,15 @@ namespace XboxFtp.Core.UseCases
             XboxTransferWorker fileWorker1 = new XboxTransferWorker(_xboxGameRepositoryFactory, gameName, _xboxFtpRequests, finishedRequests,_notifier);
             XboxTransferWorker fileWorker2 = new XboxTransferWorker(_xboxGameRepositoryFactory, gameName, _xboxFtpRequests, finishedRequests, _notifier);
             XboxTransferProgressWorker progressWorker = new XboxTransferProgressWorker(_xboxGameRepositoryFactory, gameName,_notifier, finishedRequests,
-                totalSizeToUpload);
+                totalSizeToUpload, uploadResumeReport.SizeUploaded);
 
             progressWorker.Start();
             fileWorker1.Start();
             fileWorker2.Start();
 
-            _notifier.ReportTotalFilesToTransfer(gameName, filesToUpload.Count);
+            _notifier.ReportTotalFilesToTransfer(gameName, uploadResumeReport.RemainingFiles.Count);
 
-            foreach (var zipEntry in filesToUpload)
+            foreach (var zipEntry in uploadResumeReport.RemainingFiles)
             {
                 WaitIfMaxOutstandingRequests();
                 WaitIfMaxMemoryInQueue();

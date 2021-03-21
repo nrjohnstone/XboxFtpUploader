@@ -24,6 +24,10 @@ namespace XboxFtp.Console
             _progressNotifiers.ForEach(x => x.StartingGameUpload(gameName));
         }
 
+        public void SkipCreateFolderStructure(string gameName)
+        {
+        }
+
         public void FinishedGameUpload(string gameName, TimeSpan totalUploadTime)
         {
             _progressNotifiers.ForEach(x => x.FinishedGameUpload(gameName, totalUploadTime));

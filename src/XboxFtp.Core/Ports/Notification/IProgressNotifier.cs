@@ -8,6 +8,7 @@ namespace XboxFtp.Core.Ports.Notification
     {
         void GameAddedToUploadQueue(string gameName);
         void StartingGameUpload(string gameName);
+        void SkipCreateFolderStructure(string gameName);
         void FinishedGameUpload(string gameName, TimeSpan totalUploadTime);
         void GameUploadError(string gameName, Exception ex, string errorMessage);
         void ReportTotalFilesToTransfer(string gameName, int count);

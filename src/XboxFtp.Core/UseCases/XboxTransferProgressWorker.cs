@@ -11,15 +11,17 @@ namespace XboxFtp.Core.UseCases
         private readonly IProgressNotifier _notifier;
         private readonly BlockingCollection<IXboxTransferRequest> _finishedRequests;
         private readonly long _totalBytesToUpload;
+        private readonly long _totalBytesAlreadyUploaded;
         private long _totalBytesUploaded;
 
         public XboxTransferProgressWorker(IXboxGameRepositoryFactory xboxGameRepositoryFactory, string gameName,
-            IProgressNotifier notifier, BlockingCollection<IXboxTransferRequest> finishedRequests, long totalBytesToUpload)
+            IProgressNotifier notifier, BlockingCollection<IXboxTransferRequest> finishedRequests, long totalBytesToUpload, long totalBytesAlreadyUploaded)
         {
             _gameName = gameName;
             _notifier = notifier;
             _finishedRequests = finishedRequests;
             _totalBytesToUpload = totalBytesToUpload;
+            _totalBytesAlreadyUploaded = totalBytesAlreadyUploaded;
         }
 
         protected override void ProcessNextRequest()
@@ -35,7 +37,9 @@ namespace XboxFtp.Core.UseCases
 
             _totalBytesUploaded += item.Length;
 
-            int percentComplete = (int) (((float) _totalBytesUploaded / (float) _totalBytesToUpload) * 100);
+            long totalBytesForGame = _totalBytesAlreadyUploaded + _totalBytesToUpload;
+
+            int percentComplete = (int) (((float) (_totalBytesAlreadyUploaded + _totalBytesUploaded) / (float) totalBytesForGame) * 100);
 
             _notifier.FinishedFileUpload(_gameName, item, percentComplete);
         }

@@ -33,6 +33,10 @@ namespace Adapter.Notifier.TerminalGui
             SetStatusText(gameName);
         }
 
+        public void SkipCreateFolderStructure(string gameName)
+        {
+        }
+
         private void SetStatusText(string gameName)
         {
             Application.MainLoop.Invoke (() => {

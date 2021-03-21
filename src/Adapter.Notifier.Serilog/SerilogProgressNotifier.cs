@@ -32,6 +32,10 @@ namespace Adapter.Notifier.Serilog
             _gameLogger.Add(gameName, gameLogger);
         }
 
+        public void SkipCreateFolderStructure(string gameName)
+        {
+        }
+
         public void FinishedGameUpload(string gameName, TimeSpan totalUploadTime)
         {
             _gameLogger[gameName].Information("Total upload time: {TotalUploadTime} second",

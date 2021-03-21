@@ -14,6 +14,10 @@ namespace Adapter.Persistence.InMemory
         {
         }
 
+        public void SkipCreateFolderStructure(string gameName)
+        {
+        }
+
         public void FinishedGameUpload(string gameName, TimeSpan totalUploadTime)
         {
         }
