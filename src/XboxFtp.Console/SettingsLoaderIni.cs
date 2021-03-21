@@ -30,6 +30,10 @@ namespace XboxFtp.Console
             return settings;
         }
 
+        /// <summary>
+        /// Add user specific settings from Documents\XboxFtp\settings.ini
+        /// </summary>
+        /// <param name="configurationBuilder"></param>
         private void AddUserSettings(IConfigurationBuilder configurationBuilder)
         {
             var xboxSettingsDirectory = Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "XboxFtp");

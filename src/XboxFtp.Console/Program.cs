@@ -19,9 +19,10 @@ namespace XboxFtp.Console
         {
             SettingsLoaderIni settingsLoader = new SettingsLoaderIni(args);
             var settings = settingsLoader.Load();
+            string correlationId = Guid.NewGuid().ToString();
 
-            Log.Logger = SerilogConfiguration.Create("XboxFtpUpload", settings).CreateLogger();
-
+            Log.Logger = SerilogConfiguration.Create("XboxFtpUpload", settings, correlationId).CreateLogger();
+            
             Log.Information("Starting XBox FTP Upload");
 
             SerilogProgressNotifier serilogNotifier = new SerilogProgressNotifier(Log.Logger);
@@ -32,7 +33,7 @@ namespace XboxFtp.Console
             
             IProgressNotifier notifier = new ChainedProgressNotifier(new List<IProgressNotifier>()
             {
-                terminalGuiProgressNotifier
+                terminalGuiProgressNotifier, serilogNotifier
             });
             
             try
@@ -57,7 +58,7 @@ namespace XboxFtp.Console
                     xboxGameRepositoryFactory = UseFtpAdapter(xboxFtpsettings);
                 }
 
-                UploadArchivesUseCase useCase = new UploadArchivesUseCase(xboxGameRepositoryFactory, notifier);
+                UploadArchivesUseCase useCase = new UploadArchivesUseCase(xboxGameRepositoryFactory, notifier, new ZipFileProcessor());
                 
                 List<string> gamesToUpload = new List<string>();
                 

@@ -5,12 +5,13 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using Serilog.Exceptions;
 
 namespace XboxFtp.Console.Configuration.Logging
 {
     public class SerilogConfiguration
     {
-        public static LoggerConfiguration Create(string applicationName, Settings settings)
+        public static LoggerConfiguration Create(string applicationName, Settings settings, string correlationid)
         {
             string tempPath = Path.GetTempPath();
             string logPath = Path.Combine(tempPath, "LogBuffers", applicationName);
@@ -23,6 +24,8 @@ namespace XboxFtp.Console.Configuration.Logging
                 .Enrich.WithThreadName()
                 .Enrich.FromLogContext()
                 .Enrich.WithProperty("Application", applicationName)
+                .Enrich.WithProperty("CorrelationId", correlationid)
+                .Enrich.WithExceptionDetails()
                 .MinimumLevel.Is(LogEventLevel.Debug)
                 .WriteTo.Console(
                     outputTemplate:

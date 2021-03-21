@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -10,6 +11,9 @@ using System.Threading;
 using Ionic.Crc;
 using Ionic.Zip;
 using Serilog;
+using Serilog.Context;
+using Serilog.Core;
+using Serilog.Core.Enrichers;
 using XboxFtp.Core.Entities;
 using XboxFtp.Core.Ports.Notification;
 using XboxFtp.Core.Ports.Persistence;
@@ -20,14 +24,16 @@ namespace XboxFtp.Core.UseCases
     {
         private readonly IXboxGameRepositoryFactory _xboxGameRepositoryFactory;
         private readonly IProgressNotifier _notifier;
+        private readonly IZipFileProcessor _zipFileProcessor;
         private readonly BlockingCollection<IXboxTransferRequest> _xboxFtpRequests;
         private readonly BlockingCollection<XboxDirectoryCreateRequest> _xboxDirectoryCreateRequests;
 
         public UploadArchivesUseCase(IXboxGameRepositoryFactory xboxGameRepositoryFactory,
-            IProgressNotifier notifier)
+            IProgressNotifier notifier, IZipFileProcessor zipFileProcessor)
         {
             _xboxGameRepositoryFactory = xboxGameRepositoryFactory;
             _notifier = notifier;
+            _zipFileProcessor = zipFileProcessor;
             _xboxFtpRequests = new BlockingCollection<IXboxTransferRequest>();
             _xboxDirectoryCreateRequests = new BlockingCollection<XboxDirectoryCreateRequest>();
         }
@@ -38,25 +44,45 @@ namespace XboxFtp.Core.UseCases
             {
                 NotifyAllGames(archivePaths);
 
-                foreach (var archivePath in archivePaths)
+                foreach (string archivePath in archivePaths)
                 {
                     string gameName = GetGameNameFromPath(archivePath);
-                    _notifier.StartingGameUpload(gameName);
-
-                    try
+                    
+                    ILogEventEnricher[] properties = new ILogEventEnricher[]
                     {
-                        Stopwatch uploadDuration = Stopwatch.StartNew();
-                        var filesToUpload = GetFilesToUpload(gameName, archivePath);
-
-                        CreateFolderStructure(gameName, archivePath);
-                        UploadAllFiles(gameName, filesToUpload);
-
-                        _notifier.FinishedGameUpload(gameName, uploadDuration.Elapsed);
-                    }
-                    catch (Exception ex)
+                        new PropertyEnricher("ArchivePath", archivePath),
+                        new PropertyEnricher("Game", gameName)
+                    };
+                    
+                    using (LogContext.Push(properties))
                     {
-                        _notifier.GameUploadError(gameName, ex, $"An unhandled exception occurred while uploading archive for {gameName}");
-                    }
+                        _notifier.StartingGameUpload(gameName);
+
+                        try
+                        {
+                            Stopwatch uploadDuration = Stopwatch.StartNew();
+                            var filesInArchive = GetAllFilesInArchive(gameName, archivePath);
+                            long totalSizeOfArchive = filesInArchive.Sum(x => x.UncompressedSize);
+                            
+                            var filesToUpload = GetFilesToUpload(gameName, archivePath);
+                            long totalSizeFilesToUpload = filesToUpload.Sum(x => x.UncompressedSize);
+
+                            Log.ForContext("TotalUncompressedSize", totalSizeOfArchive)
+                                .ForContext("FilesToUploadUncompressedSize", totalSizeFilesToUpload)
+                                .Information("Calculated uncompressed size of files to upload");
+                            
+                            CreateFolderStructure(gameName, archivePath);
+                            UploadAllFiles(gameName, filesToUpload);
+                            
+                            Log.ForContext("DurationMs",uploadDuration.ElapsedMilliseconds).Information("Upload finished");
+                            _notifier.FinishedGameUpload(gameName, uploadDuration.Elapsed);
+                        }
+                        catch (Exception ex)
+                        {
+                            Log.Error(ex, "Unhandled exception occured while uploading archive.");
+                            _notifier.GameUploadError(gameName, ex, $"An unhandled exception occurred while uploading archive for {gameName}");
+                        }
+                    }                    
                 }
             }
             catch (Exception ex)
@@ -79,6 +105,16 @@ namespace XboxFtp.Core.UseCases
             return Path.GetFileNameWithoutExtension(archivePath);
         }
 
+        private IList<IZipEntry> GetAllFilesInArchive(string gameName, string archivePath)
+        {
+            using (IZipFile zip = _zipFileProcessor.Read(archivePath))
+            {
+                // Order files alphabetically to ensure we can resume interrupted uploads
+                List<IZipEntry> files = zip.ReadAllFiles();
+                return files;
+            }
+        }
+        
         private IList<IZipEntry> GetFilesToUpload(string gameName, string archivePath)
         {
             IXboxGameRepository xboxGameRepository = _xboxGameRepositoryFactory.Create();
@@ -86,10 +122,11 @@ namespace XboxFtp.Core.UseCases
 
             IList<IZipEntry> filesToUpload; 
             
-            using (ZipFile zip = ZipFile.Read(archivePath))
+            using (IZipFile zip = _zipFileProcessor.Read(archivePath))
             {
                 // Order files alphabetically to ensure we can resume interrupted uploads
-                var files = new List<IZipEntry>(zip.Where(entry => !entry.IsDirectory).Select(x => new ZipEntryWrapper(x)).OrderBy(entry => entry.FileName));
+                List<IZipEntry> files = zip.ReadAllFiles();
+                
                 _notifier.CheckingForUploadedFiles(gameName);
                 
                 IUploadResumeStrategy uploadResumeStrategy = new BinarySearchUploadResumeStrategy(files, _notifier, gameName, xboxGameRepository);
@@ -243,9 +280,9 @@ namespace XboxFtp.Core.UseCases
         {
             _notifier.CreateFolderStructure(gameName);
             
-            using (ZipFile zip = ZipFile.Read(archivePath))
+            using (IZipFile zip = _zipFileProcessor.Read(archivePath))
             {
-                var directories = zip.Where(entry => entry.IsDirectory);
+                var directories = zip.GetDirectories();
 
                 foreach (var zipEntry in directories)
                 {

@@ -1,4 +1,9 @@
-﻿using XboxFtp.Core.Ports.Persistence;
+﻿using System;
+using FluentFTP;
+using Polly;
+using Polly.Registry;
+using Polly.Retry;
+using XboxFtp.Core.Ports.Persistence;
 using XboxFtp.Core.UseCases;
 
 namespace Adapter.Persistence.Ftp
@@ -16,7 +21,32 @@ namespace Adapter.Persistence.Ftp
 
         public IXboxGameRepository Create()
         {
-            return new FtpXboxGameRepository(_ftpClientFactory, _ftpXboxSettings);
+            Policy ftpPolicy = Policy.Handle<FtpException>().RetryForever((exception) =>
+            {
+                if (exception.InnerException is TimeoutException)
+                {
+                    return;
+                }
+                
+                if (exception is FtpCommandException commandException)
+                {
+                    Console.WriteLine($"FtpException code: {commandException.CompletionCode}");
+                    if (commandException.ResponseType != FtpResponseType.TransientNegativeCompletion)
+                    {
+                        throw new PersistenceException("Non transient error occurred", false, commandException);
+                    }
+                }
+                
+                throw new PersistenceException("Non transient error occurred", false, exception);
+            });
+            PolicyRegistry policyRegistry = new PolicyRegistry();
+            policyRegistry.Add("Ftp", ftpPolicy);
+            
+            var ftpXboxGameRepository = new FtpXboxGameRepository(_ftpClientFactory, _ftpXboxSettings, policyRegistry);
+            
+            return ftpXboxGameRepository;
         }
     }
+    
+    
 }

@@ -5,6 +5,10 @@ using XboxFtp.Core.Entities;
 
 namespace XboxFtp.Core.UseCases
 {
+    /// <summary>
+    /// Creates the directory structure of an XBOX game before files are uploaded to remove any
+    /// contention around separate workers creating the same directory 
+    /// </summary>
     internal class XboxDirectoryStructureWorker : XboxWorkerBase
     {
         private readonly BlockingCollection<XboxDirectoryCreateRequest> _requests;

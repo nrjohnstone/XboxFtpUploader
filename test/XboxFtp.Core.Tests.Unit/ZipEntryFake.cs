@@ -4,7 +4,7 @@ using XboxFtp.Core.Entities;
 
 namespace XboxFtp.Core.Tests.Unit
 {
-    internal class ZipFileFake : IZipEntry
+    internal class ZipEntryFake : IZipEntry
     {
         public string FileName { get; set; }
         public long UncompressedSize { get; set; }

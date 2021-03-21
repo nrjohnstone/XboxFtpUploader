@@ -3,18 +3,26 @@ using System.IO;
 using FluentAssertions;
 using FluentFTP;
 using NUnit.Framework;
+using Polly;
+using Polly.NoOp;
+using Polly.Registry;
 
 namespace Adapter.Persistence.Ftp.Tests.Integration
 {
     public class FtpClientTests
     {
         private FtpClient _ftpClient;
+        private NoOpPolicy _ftpPolicy;
+        private PolicyRegistry _policyRegistry;
 
         [SetUp]
         public void Setup()
         {
             _ftpClient = CreateFtpClient();
             _ftpClient.Connect();
+            _ftpPolicy = Policy.NoOp();
+            _policyRegistry = new PolicyRegistry();
+            _policyRegistry.Add("Ftp", _ftpPolicy);
         }
 
         private FtpClient CreateFtpClient()
@@ -33,7 +41,7 @@ namespace Adapter.Persistence.Ftp.Tests.Integration
                 GameRootDirectory = "Games"
             };
             
-            var sut = new FtpXboxGameRepository(new FtpClientFactory(settings), settings);
+            var sut = CreateSut(settings);
             
             // act            
             Action connectWithIncorrectPassword = () => sut.Connect();
@@ -41,7 +49,20 @@ namespace Adapter.Persistence.Ftp.Tests.Integration
             // assert
             connectWithIncorrectPassword.Should().Throw<FtpException>();
         }
-        
+
+        private FtpXboxGameRepository CreateSut(FtpXboxSettings settings)
+        {
+            var ftpClientFactory = new FtpClientFactory(settings);
+            var sut = new FtpXboxGameRepository(ftpClientFactory, settings, _policyRegistry);
+            return sut;
+        }
+
+        private FtpXboxGameRepository CreateSut(FtpXboxSettings settings, IFtpClientFactory ftpClientFactory)
+        {
+            var sut = new FtpXboxGameRepository(ftpClientFactory, settings, _policyRegistry);
+            return sut;
+        }
+
         [Test]
         public void Connect_WhenUserIsIncorrect_ShouldThrow()
         {
@@ -53,7 +74,7 @@ namespace Adapter.Persistence.Ftp.Tests.Integration
                 GameRootDirectory = "Games"
             };
             
-            var sut = new FtpXboxGameRepository(new FtpClientFactory(settings), settings);
+            var sut = CreateSut(settings);
             
             // act            
             Action connectWithIncorrectUser = () => sut.Connect();
@@ -73,7 +94,7 @@ namespace Adapter.Persistence.Ftp.Tests.Integration
                 GameRootDirectory = "Games"
             };
             
-            var sut = new FtpXboxGameRepository(new FtpClientFactory(settings), settings);
+            var sut = CreateSut(settings);
             
             // act            
             Action connectWithValidCredentials = () => sut.Connect();
@@ -93,7 +114,7 @@ namespace Adapter.Persistence.Ftp.Tests.Integration
                 GameRootDirectory = "Games"
             };
             
-            var sut = new FtpXboxGameRepository(new FtpClientFactory(settings), settings);
+            var sut = CreateSut(settings);
             sut.Connect();
             
             // act            
@@ -114,7 +135,7 @@ namespace Adapter.Persistence.Ftp.Tests.Integration
                 GameRootDirectory = "Games"
             };
             
-            var sut = new FtpXboxGameRepository(new FtpClientFactory(settings), settings);
+            var sut = CreateSut(settings);
             sut.Connect();
             
             // act            
@@ -135,7 +156,7 @@ namespace Adapter.Persistence.Ftp.Tests.Integration
                 GameRootDirectory = "Games"
             };
             
-            var sut = new FtpXboxGameRepository(new FtpClientFactory(settings), settings);
+            var sut = CreateSut(settings);
             sut.Connect();
             
             // act            
@@ -156,7 +177,7 @@ namespace Adapter.Persistence.Ftp.Tests.Integration
                 GameRootDirectory = "Games"
             };
             
-            var sut = new FtpXboxGameRepository(new FtpClientFactory(settings), settings);
+            var sut = CreateSut(settings);
             sut.Connect();
             
             // act            
@@ -177,7 +198,7 @@ namespace Adapter.Persistence.Ftp.Tests.Integration
                 GameRootDirectory = "/F/Games"
             };
             
-            var sut = new FtpXboxGameRepository(new FtpClientFactory(settings), settings);
+            var sut = CreateSut(settings);
             sut.Connect();
             
             // act            
@@ -198,7 +219,7 @@ namespace Adapter.Persistence.Ftp.Tests.Integration
                 GameRootDirectory = "/F/Games"
             };
             
-            var sut = new FtpXboxGameRepository(new FtpClientFactory(settings), settings);
+            var sut = CreateSut(settings);
             sut.Connect();
             
             // act
@@ -220,7 +241,7 @@ namespace Adapter.Persistence.Ftp.Tests.Integration
                 GameRootDirectory = "/F/Games"
             };
             
-            var sut = new FtpXboxGameRepository(new FtpClientFactory(settings), settings);
+            var sut = CreateSut(settings);
             sut.Connect();
             
             // act
@@ -242,7 +263,7 @@ namespace Adapter.Persistence.Ftp.Tests.Integration
                 GameRootDirectory = "/F/Games"
             };
             
-            var sut = new FtpXboxGameRepository(new FtpClientFactory(settings), settings);
+            var sut = CreateSut(settings);
             sut.Connect();
             byte[] data = File.ReadAllBytes("SampleFileB.txt");
             
@@ -262,7 +283,7 @@ namespace Adapter.Persistence.Ftp.Tests.Integration
         }
         
         [Test]
-        public void Store_WhenProvidingAStrean_ShouldStoreFileCorrectly()
+        public void Store_WhenProvidingAStream_ShouldStoreFileCorrectly()
         {
             FtpXboxSettings settings = new FtpXboxSettings()
             {
@@ -272,7 +293,7 @@ namespace Adapter.Persistence.Ftp.Tests.Integration
                 GameRootDirectory = "/F/Games"
             };
             
-            var sut = new FtpXboxGameRepository(new FtpClientFactory(settings), settings);
+            var sut = CreateSut(settings);
             sut.Connect();
             MemoryStream data = new MemoryStream();
             data.Write(File.ReadAllBytes("SampleFileC.txt"));
@@ -290,6 +311,60 @@ namespace Adapter.Persistence.Ftp.Tests.Integration
             memoryStream.Length.Should().Be(42);
             var actualData = memoryStream.ToArray();
             actualData.Should().BeEquivalentTo(data.ToArray());
+        }
+
+        [Test]
+        public void Store_WhenFtpDisconnects_ShouldReconnectAndContinue()
+        {
+            FtpXboxSettings settings = new FtpXboxSettings()
+            {
+                Host = Global.Settings.XboxFtpHost,
+                User =  Global.Settings.XboxFtpUser,
+                Password = Global.Settings.XboxFtpPassword,
+                GameRootDirectory = "/F/Games"
+            };
+            
+            FtpClient testFtpClient = new FtpClient(settings.Host, settings.Port, settings.User, settings.Password);
+            SingletonFtpClientFactory ftpClientFactory = new SingletonFtpClientFactory(testFtpClient);
+            
+            var sut = CreateSut(settings, ftpClientFactory);
+            
+            MemoryStream data = new MemoryStream();
+            data.Write(File.ReadAllBytes("SampleFileC.txt"));
+            sut.Connect();
+            testFtpClient.Disconnect();
+            
+            // act
+            sut.Store("GameA", "SampleFileD.txt", data);
+            
+            // assert
+            bool exists = _ftpClient.FileExists("/F/Games/GameA/SampleFileD.txt");
+            exists.Should().BeTrue();
+            FtpListItem fileInfo = _ftpClient.GetObjectInfo("/F/Games/GameA/SampleFileD.txt");
+            fileInfo.Size.Should().Be(42);
+            MemoryStream memoryStream = new MemoryStream();
+            _ftpClient.Download(memoryStream, "/F/Games/GameA/SampleFileD.txt");
+            memoryStream.Length.Should().Be(42);
+            var actualData = memoryStream.ToArray();
+            actualData.Should().BeEquivalentTo(data.ToArray());
+        }
+    }
+    
+    /// <summary>
+    /// FtpClientFactory that returns a singleton instance for resilience testing
+    /// </summary>
+    internal class SingletonFtpClientFactory : IFtpClientFactory
+    {
+        private readonly FtpClient _ftpClient;
+        
+        public SingletonFtpClientFactory(FtpClient ftpClient)
+        {
+            _ftpClient = ftpClient;
+        }
+
+        public IFtpClient Create()
+        {
+            return _ftpClient;
         }
     }
 }

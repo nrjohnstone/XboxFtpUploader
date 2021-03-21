@@ -31,9 +31,9 @@ namespace XboxFtp.Core.Tests.Unit
         public void WhenNoFilesExistOnTargetXbox_ShouldReturnAllFilesAsRemaining()
         {
             IList<IZipEntry> filesToCheck = new List<IZipEntry>();
-            filesToCheck.Add(new ZipFileFake() { FileName = "TestFile1"});
-            filesToCheck.Add(new ZipFileFake() { FileName = "TestFile2"});
-            filesToCheck.Add(new ZipFileFake() { FileName = "TestFile3"});
+            filesToCheck.Add(new ZipEntryFake() { FileName = "TestFile1"});
+            filesToCheck.Add(new ZipEntryFake() { FileName = "TestFile2"});
+            filesToCheck.Add(new ZipEntryFake() { FileName = "TestFile3"});
             
             var sut = CreateSut(filesToCheck);
 
@@ -49,9 +49,9 @@ namespace XboxFtp.Core.Tests.Unit
         public void WhenFirstFileExistOnTargetXbox_AndIsTheSameSize_ShouldRemoveFileFromFilesAsRemaining()
         {
             IList<IZipEntry> filesToCheck = new List<IZipEntry>();
-            filesToCheck.Add(new ZipFileFake() { FileName = "TestFile1", UncompressedSize = 4});
-            filesToCheck.Add(new ZipFileFake() { FileName = "TestFile2", UncompressedSize = 4});
-            filesToCheck.Add(new ZipFileFake() { FileName = "TestFile3", UncompressedSize = 4});
+            filesToCheck.Add(new ZipEntryFake() { FileName = "TestFile1", UncompressedSize = 4});
+            filesToCheck.Add(new ZipEntryFake() { FileName = "TestFile2", UncompressedSize = 4});
+            filesToCheck.Add(new ZipEntryFake() { FileName = "TestFile3", UncompressedSize = 4});
             
             var sut = CreateSut(filesToCheck);
             _xboxGameRepository.Store("TestGame", "TestFile1", new byte[] { 1,2,3,4});
@@ -69,9 +69,9 @@ namespace XboxFtp.Core.Tests.Unit
         public void WhenFirstFileExistOnTargetXbox_AndIsNotTheSameSize_ShouldIncludeFileFromFilesAsRemaining()
         {
             IList<IZipEntry> filesToCheck = new List<IZipEntry>();
-            filesToCheck.Add(new ZipFileFake() { FileName = "TestFile1", UncompressedSize = 8});
-            filesToCheck.Add(new ZipFileFake() { FileName = "TestFile2", UncompressedSize = 4});
-            filesToCheck.Add(new ZipFileFake() { FileName = "TestFile3", UncompressedSize = 4});
+            filesToCheck.Add(new ZipEntryFake() { FileName = "TestFile1", UncompressedSize = 8});
+            filesToCheck.Add(new ZipEntryFake() { FileName = "TestFile2", UncompressedSize = 4});
+            filesToCheck.Add(new ZipEntryFake() { FileName = "TestFile3", UncompressedSize = 4});
             
             var sut = CreateSut(filesToCheck);
             _xboxGameRepository.Store("TestGame", "TestFile1", new byte[] { 1,2,3,4});

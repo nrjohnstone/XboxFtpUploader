@@ -31,9 +31,9 @@ namespace XboxFtp.Core.Tests.Unit
         public void WhenNoFilesExistOnTargetXbox_ShouldReturnAllFilesAsRemaining()
         {
             IList<IZipEntry> filesToCheck = new List<IZipEntry>();
-            filesToCheck.Add(new ZipFileFake() { FileName = "TestFile1"});
-            filesToCheck.Add(new ZipFileFake() { FileName = "TestFile2"});
-            filesToCheck.Add(new ZipFileFake() { FileName = "TestFile3"});
+            filesToCheck.Add(new ZipEntryFake() { FileName = "TestFile1"});
+            filesToCheck.Add(new ZipEntryFake() { FileName = "TestFile2"});
+            filesToCheck.Add(new ZipEntryFake() { FileName = "TestFile3"});
             
             var sut = CreateSut(filesToCheck);
 
@@ -49,10 +49,10 @@ namespace XboxFtp.Core.Tests.Unit
         public void When50PercentOfFilesExistOnTargetXbox_ShouldReturnOtherFilesAsRemaining()
         {
             IList<IZipEntry> filesToCheck = new List<IZipEntry>();
-            filesToCheck.Add(new ZipFileFake() { FileName = "TestFile1", UncompressedSize = 4});
-            filesToCheck.Add(new ZipFileFake() { FileName = "TestFile2", UncompressedSize = 4});
-            filesToCheck.Add(new ZipFileFake() { FileName = "TestFile3", UncompressedSize = 4});
-            filesToCheck.Add(new ZipFileFake() { FileName = "TestFile4", UncompressedSize = 4});
+            filesToCheck.Add(new ZipEntryFake() { FileName = "TestFile1", UncompressedSize = 4});
+            filesToCheck.Add(new ZipEntryFake() { FileName = "TestFile2", UncompressedSize = 4});
+            filesToCheck.Add(new ZipEntryFake() { FileName = "TestFile3", UncompressedSize = 4});
+            filesToCheck.Add(new ZipEntryFake() { FileName = "TestFile4", UncompressedSize = 4});
             
             var sut = CreateSut(filesToCheck);
             
@@ -71,10 +71,10 @@ namespace XboxFtp.Core.Tests.Unit
         public void WhenAFileIsNotCorrectSize_ShouldResumeAtThatFile()
         {
             IList<IZipEntry> filesToCheck = new List<IZipEntry>();
-            filesToCheck.Add(new ZipFileFake() { FileName = "TestFile1", UncompressedSize = 4});
-            filesToCheck.Add(new ZipFileFake() { FileName = "TestFile2", UncompressedSize = 4});
-            filesToCheck.Add(new ZipFileFake() { FileName = "TestFile3", UncompressedSize = 4});
-            filesToCheck.Add(new ZipFileFake() { FileName = "TestFile4", UncompressedSize = 4});
+            filesToCheck.Add(new ZipEntryFake() { FileName = "TestFile1", UncompressedSize = 4});
+            filesToCheck.Add(new ZipEntryFake() { FileName = "TestFile2", UncompressedSize = 4});
+            filesToCheck.Add(new ZipEntryFake() { FileName = "TestFile3", UncompressedSize = 4});
+            filesToCheck.Add(new ZipEntryFake() { FileName = "TestFile4", UncompressedSize = 4});
             
             var sut = CreateSut(filesToCheck);
             
@@ -93,10 +93,10 @@ namespace XboxFtp.Core.Tests.Unit
         public void WhenAllFilesExistsOnXbox_ShouldReturnNoRemaingFilesToUpload()
         {
             IList<IZipEntry> filesToCheck = new List<IZipEntry>();
-            filesToCheck.Add(new ZipFileFake() { FileName = "TestFile1", UncompressedSize = 4});
-            filesToCheck.Add(new ZipFileFake() { FileName = "TestFile2", UncompressedSize = 4});
-            filesToCheck.Add(new ZipFileFake() { FileName = "TestFile3", UncompressedSize = 4});
-            filesToCheck.Add(new ZipFileFake() { FileName = "TestFile4", UncompressedSize = 4});
+            filesToCheck.Add(new ZipEntryFake() { FileName = "TestFile1", UncompressedSize = 4});
+            filesToCheck.Add(new ZipEntryFake() { FileName = "TestFile2", UncompressedSize = 4});
+            filesToCheck.Add(new ZipEntryFake() { FileName = "TestFile3", UncompressedSize = 4});
+            filesToCheck.Add(new ZipEntryFake() { FileName = "TestFile4", UncompressedSize = 4});
             
             var sut = CreateSut(filesToCheck);
             
@@ -123,7 +123,7 @@ namespace XboxFtp.Core.Tests.Unit
             IList<IZipEntry> filesToCheck = new List<IZipEntry>();
             for (int i = 0; i < totalFileCount; i++)
             {
-                filesToCheck.Add(new ZipFileFake() { FileName = $"TestFile{i}", UncompressedSize = 4});    
+                filesToCheck.Add(new ZipEntryFake() { FileName = $"TestFile{i}", UncompressedSize = 4});    
             }
             
             var sut = CreateSut(filesToCheck);

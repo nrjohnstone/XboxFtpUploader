@@ -27,6 +27,7 @@ namespace XboxFtp.Core.Entities
             _gameName = gameName;
             _xboxGameRepository = xboxGameRepository;
         }
+
         public IList<IZipEntry> GetRemainingFiles()
         {
             int lowerBound = 0;

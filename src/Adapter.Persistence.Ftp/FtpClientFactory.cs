@@ -1,8 +1,9 @@
 ﻿using FluentFTP;
+using Serilog;
 
 namespace Adapter.Persistence.Ftp
 {
-    public class FtpClientFactory
+    public class FtpClientFactory : IFtpClientFactory
     {
         private readonly FtpXboxSettings _ftpXboxSettings;
 
@@ -11,10 +12,11 @@ namespace Adapter.Persistence.Ftp
             _ftpXboxSettings = ftpXboxSettings;
         }
 
-        public FtpClient Create()
+        public IFtpClient Create()
         {
             var ftpClient = new FtpClient(_ftpXboxSettings.Host, _ftpXboxSettings.Port, _ftpXboxSettings.User, _ftpXboxSettings.Password);
             ftpClient.ConnectTimeout = 2000;
+            Log.Debug("FtpClient created");
             return ftpClient;
         }
     }

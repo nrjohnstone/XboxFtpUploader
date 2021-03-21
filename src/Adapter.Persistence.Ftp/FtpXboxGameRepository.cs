@@ -3,23 +3,30 @@ using System.IO;
 using System.Net;
 using System.Threading;
 using FluentFTP;
+using Polly;
+using Polly.Registry;
 using XboxFtp.Core.Ports.Persistence;
 
 namespace Adapter.Persistence.Ftp
 {
     public class FtpXboxGameRepository : IXboxGameRepository
     {
-        private readonly FtpClientFactory _ftpClientFactory;
-        private FtpClient _ftpClient;
+        private readonly IFtpClientFactory _ftpClientFactory;
+        private IFtpClient _ftpClient;
         private readonly FtpXboxSettings _ftpXboxSettings;
+        private readonly PolicyRegistry _policyRegistry;
+        private readonly Policy _ftpPolicy;
         private string _currentWorkingDirectory;
 
-        public FtpXboxGameRepository(FtpClientFactory ftpClientFactory, FtpXboxSettings ftpXboxSettings)
+        public FtpXboxGameRepository(IFtpClientFactory ftpClientFactory, FtpXboxSettings ftpXboxSettings, PolicyRegistry policyRegistry)
         {
             if (ftpClientFactory == null) throw new ArgumentNullException(nameof(ftpClientFactory));
             if (ftpXboxSettings == null) throw new ArgumentNullException(nameof(ftpXboxSettings));
             _ftpClientFactory = ftpClientFactory;
             _ftpXboxSettings = ftpXboxSettings;
+            _policyRegistry = policyRegistry;
+
+            _ftpPolicy = _policyRegistry.Get<Policy>("Ftp");
             _currentWorkingDirectory = "";
         }
         
@@ -47,6 +54,11 @@ namespace Adapter.Persistence.Ftp
                     {
                         throw;
                     }
+                }
+                catch (TimeoutException ex)
+                {
+                    Serilog.Log.Warning(ex, "Timeout. Unable to connect. Retrying");
+                    Thread.Sleep(2000);
                 }
             }
 
@@ -86,7 +98,11 @@ namespace Adapter.Persistence.Ftp
             string gameRoot = Path.Combine(_ftpXboxSettings.GameRootDirectory, gameName);
             SetWorkingDirectory(gameRoot);
 
-            _ftpClient.Upload(data, targetFilePath);
+            var result = _ftpPolicy.ExecuteAndCapture(() => _ftpClient.Upload(data, targetFilePath));
+            if (result.Outcome == OutcomeType.Failure)
+            {
+                throw new PersistenceException("Non transient failure while uploading", false, result.FinalException);
+            }
         }
 
         public void Store(string gameName, string targetFilePath, Stream data)
@@ -95,7 +111,13 @@ namespace Adapter.Persistence.Ftp
 
             string gameRoot = Path.Combine(_ftpXboxSettings.GameRootDirectory, gameName);
             SetWorkingDirectory(gameRoot);
-            _ftpClient.Upload(data, targetFilePath);
+
+            var result = _ftpPolicy.ExecuteAndCapture(() => { _ftpClient.Upload(data, targetFilePath); });
+
+            if (result.Outcome == OutcomeType.Failure)
+            {
+                throw new PersistenceException("Non transient failure while uploading", false, result.FinalException);
+            }
         }
 
         public bool Exists(string gameName, string targetFilePath, long size)
@@ -128,7 +150,7 @@ namespace Adapter.Persistence.Ftp
                 {
                     return false;
                 }
-                throw new PersistenceException("Unhandled FTP exception", ex);
+                throw new XboxFtp.Core.Ports.Persistence.PersistenceException("Unhandled FTP exception", ex);
             }
             catch (Exception ex)
             {
@@ -157,19 +179,6 @@ namespace Adapter.Persistence.Ftp
             ValidateFtpClient();
 
             _ftpClient.CreateDirectory(targetDirectory);
-        }
-    }
-
-    internal static class FtpCommandExceptionExtensions
-    {
-        public static bool IsTransient(this FtpCommandException ex)
-        {
-            if (ex.CompletionCode == "530") // Authentication error
-            {
-                return false;
-            }
-
-            return true;
         }
     }
 }
