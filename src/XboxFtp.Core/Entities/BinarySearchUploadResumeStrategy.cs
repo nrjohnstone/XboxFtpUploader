@@ -8,13 +8,15 @@ namespace XboxFtp.Core.Entities
 {
     public class UploadResumeReport
     {
-        public UploadResumeReport(IList<IZipEntry> remainingFiles)
+        public UploadResumeReport(IList<IZipEntry> remainingFiles, long sizeUploaded)
         {
             if (remainingFiles == null) throw new ArgumentNullException(nameof(remainingFiles));
             RemainingFiles = remainingFiles;
+            SizeUploaded = sizeUploaded;
         }
 
         public IList<IZipEntry> RemainingFiles { get; private set; } 
+        public long SizeUploaded { get; private set; }
     }
     
     /// <summary>
@@ -54,7 +56,7 @@ namespace XboxFtp.Core.Entities
             var zipEntry = filesToCheckList[0];
             if (!_xboxGameRepository.Exists(_gameName, zipEntry.FileName, zipEntry.UncompressedSize))
             {
-                return  new UploadResumeReport(filesToCheckList);
+                return  new UploadResumeReport(filesToCheckList, 0);
             }
 
             while (lowerBound <= upperBound)
@@ -77,8 +79,11 @@ namespace XboxFtp.Core.Entities
                 }
             }
 
+            var filesUploaded = filesToCheckList.GetRange(0, resumePosition + 1);
+            long sizeUploaded = filesUploaded.Sum(x => x.UncompressedSize);
+            
             filesToCheckList.RemoveRange(0, resumePosition + 1);
-            return new UploadResumeReport(filesToCheckList);
+            return new UploadResumeReport(filesToCheckList, sizeUploaded);
         }
     }
 }

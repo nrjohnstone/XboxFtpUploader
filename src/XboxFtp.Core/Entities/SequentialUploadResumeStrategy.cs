@@ -49,9 +49,12 @@ namespace XboxFtp.Core.Entities
                 _notifier.FileAlreadyExists(_gameName, zipEntry.FileName);
             }
             
+            var filesUploaded = filesToCheck.GetRange(0, filesExistCount);
+            long sizeUploaded = filesUploaded.Sum(x => x.UncompressedSize);
+
             filesToCheck.RemoveRange(0, filesExistCount);
 
-            return new UploadResumeReport(filesToCheck);
+            return new UploadResumeReport(filesToCheck, sizeUploaded);
         }
     }
 }

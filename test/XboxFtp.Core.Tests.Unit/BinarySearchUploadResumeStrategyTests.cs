@@ -65,6 +65,30 @@ namespace XboxFtp.Core.Tests.Unit
             // assert
             uploadResumeReport.RemainingFiles.Count().Should().Be(2);
             uploadResumeReport.RemainingFiles.Select(x => x.FileName).Should().BeEquivalentTo(new[] {"TestFile3", "TestFile4"});
+            uploadResumeReport.SizeUploaded.Should().Be(8);
+        }
+        
+        [Fact]
+        public void WhenFilesExistOnTargetXbox_ShouldReturnCorrectSizeUploaded()
+        {
+            IList<IZipEntry> filesToCheck = new List<IZipEntry>();
+            filesToCheck.Add(new ZipEntryFake() { FileName = "TestFile1", UncompressedSize = 4});
+            filesToCheck.Add(new ZipEntryFake() { FileName = "TestFile2", UncompressedSize = 8});
+            filesToCheck.Add(new ZipEntryFake() { FileName = "TestFile3", UncompressedSize = 16});
+            filesToCheck.Add(new ZipEntryFake() { FileName = "TestFile4", UncompressedSize = 32});
+            
+            var sut = CreateSut(filesToCheck);
+            
+            _xboxGameRepository.Store("TestGame", "TestFile1", new byte[] { 1,2,3,4});
+            _xboxGameRepository.Store("TestGame", "TestFile2", new byte[] { 1,2,3,4,5,6,7,8});
+
+            // act
+            var uploadResumeReport = sut.GetRemainingFiles();
+            
+            // assert
+            uploadResumeReport.RemainingFiles.Count().Should().Be(2);
+            uploadResumeReport.RemainingFiles.Select(x => x.FileName).Should().BeEquivalentTo(new[] {"TestFile3", "TestFile4"});
+            uploadResumeReport.SizeUploaded.Should().Be(12);
         }
         
         [Fact]
@@ -87,6 +111,7 @@ namespace XboxFtp.Core.Tests.Unit
             // assert
             uploadResumeReport.RemainingFiles.Count().Should().Be(3);
             uploadResumeReport.RemainingFiles.Select(x => x.FileName).Should().BeEquivalentTo(new[] {"TestFile2", "TestFile3", "TestFile4"});
+            uploadResumeReport.SizeUploaded.Should().Be(4);
         }
         
         [Fact]
@@ -110,6 +135,7 @@ namespace XboxFtp.Core.Tests.Unit
             
             // assert
             uploadResumeReport.RemainingFiles.Count().Should().Be(0);
+            uploadResumeReport.SizeUploaded.Should().Be(16);
         }
         
         [Theory]

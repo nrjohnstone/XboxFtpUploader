@@ -50,8 +50,8 @@ namespace XboxFtp.Core.Tests.Unit
         {
             IList<IZipEntry> filesToCheck = new List<IZipEntry>();
             filesToCheck.Add(new ZipEntryFake() { FileName = "TestFile1", UncompressedSize = 4});
-            filesToCheck.Add(new ZipEntryFake() { FileName = "TestFile2", UncompressedSize = 4});
-            filesToCheck.Add(new ZipEntryFake() { FileName = "TestFile3", UncompressedSize = 4});
+            filesToCheck.Add(new ZipEntryFake() { FileName = "TestFile2", UncompressedSize = 8});
+            filesToCheck.Add(new ZipEntryFake() { FileName = "TestFile3", UncompressedSize = 16});
             
             var sut = CreateSut(filesToCheck);
             _xboxGameRepository.Store("TestGame", "TestFile1", new byte[] { 1,2,3,4});
@@ -63,6 +63,7 @@ namespace XboxFtp.Core.Tests.Unit
             uploadResumeReport.RemainingFiles.Count().Should().Be(2);
             uploadResumeReport.RemainingFiles.Should().NotContain(x => x.FileName == "TestFile1");
             uploadResumeReport.RemainingFiles.Select(x => x.FileName).Should().BeEquivalentTo(new[] {"TestFile2", "TestFile3"});
+            uploadResumeReport.SizeUploaded.Should().Be(4);
         }
         
         [Fact]
@@ -82,6 +83,7 @@ namespace XboxFtp.Core.Tests.Unit
             // assert
             uploadResumeReport.RemainingFiles.Count().Should().Be(3);
             uploadResumeReport.RemainingFiles.Select(x => x.FileName).Should().BeEquivalentTo(new[] {"TestFile1", "TestFile2", "TestFile3"});
+            uploadResumeReport.SizeUploaded.Should().Be(0);
         }
     }
 }
