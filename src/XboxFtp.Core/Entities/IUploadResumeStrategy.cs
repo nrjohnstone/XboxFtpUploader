@@ -4,6 +4,6 @@ namespace XboxFtp.Core.Entities
 {
     public interface IUploadResumeStrategy
     {
-        IList<IZipEntry> GetRemainingFiles();
+        UploadResumeReport GetRemainingFiles();
     }
 }

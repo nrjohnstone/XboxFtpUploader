@@ -130,8 +130,9 @@ namespace XboxFtp.Core.UseCases
                 _notifier.CheckingForUploadedFiles(gameName);
                 
                 IUploadResumeStrategy uploadResumeStrategy = new BinarySearchUploadResumeStrategy(files, _notifier, gameName, xboxGameRepository);
-                
-                filesToUpload = uploadResumeStrategy.GetRemainingFiles();
+
+                var uploadResumeReport = uploadResumeStrategy.GetRemainingFiles();
+                filesToUpload = uploadResumeReport.RemainingFiles;
             }
 
             xboxGameRepository.Disconnect();

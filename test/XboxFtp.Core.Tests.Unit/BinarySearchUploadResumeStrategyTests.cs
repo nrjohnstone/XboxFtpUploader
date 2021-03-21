@@ -38,11 +38,11 @@ namespace XboxFtp.Core.Tests.Unit
             var sut = CreateSut(filesToCheck);
 
             // act
-            var remainingFiles = sut.GetRemainingFiles();
+            var uploadResumeReport = sut.GetRemainingFiles();
             
             // assert
-            remainingFiles.Count().Should().Be(3);
-            remainingFiles.Select(x => x.FileName).Should().BeEquivalentTo(new[] {"TestFile1", "TestFile2", "TestFile3"});
+            uploadResumeReport.RemainingFiles.Count().Should().Be(3);
+            uploadResumeReport.RemainingFiles.Select(x => x.FileName).Should().BeEquivalentTo(new[] {"TestFile1", "TestFile2", "TestFile3"});
         }
         
         [Fact]
@@ -60,11 +60,11 @@ namespace XboxFtp.Core.Tests.Unit
             _xboxGameRepository.Store("TestGame", "TestFile2", new byte[] { 1,2,3,4});
 
             // act
-            var remainingFiles = sut.GetRemainingFiles();
+            var uploadResumeReport = sut.GetRemainingFiles();
             
             // assert
-            remainingFiles.Count().Should().Be(2);
-            remainingFiles.Select(x => x.FileName).Should().BeEquivalentTo(new[] {"TestFile3", "TestFile4"});
+            uploadResumeReport.RemainingFiles.Count().Should().Be(2);
+            uploadResumeReport.RemainingFiles.Select(x => x.FileName).Should().BeEquivalentTo(new[] {"TestFile3", "TestFile4"});
         }
         
         [Fact]
@@ -82,11 +82,11 @@ namespace XboxFtp.Core.Tests.Unit
             _xboxGameRepository.Store("TestGame", "TestFile2", new byte[] { 1,2});
 
             // act
-            var remainingFiles = sut.GetRemainingFiles();
+            var uploadResumeReport = sut.GetRemainingFiles();
             
             // assert
-            remainingFiles.Count().Should().Be(3);
-            remainingFiles.Select(x => x.FileName).Should().BeEquivalentTo(new[] {"TestFile2", "TestFile3", "TestFile4"});
+            uploadResumeReport.RemainingFiles.Count().Should().Be(3);
+            uploadResumeReport.RemainingFiles.Select(x => x.FileName).Should().BeEquivalentTo(new[] {"TestFile2", "TestFile3", "TestFile4"});
         }
         
         [Fact]
@@ -106,10 +106,10 @@ namespace XboxFtp.Core.Tests.Unit
             _xboxGameRepository.Store("TestGame", "TestFile4", new byte[] { 1,2,3,4});
 
             // act
-            var remainingFiles = sut.GetRemainingFiles();
+            var uploadResumeReport = sut.GetRemainingFiles();
             
             // assert
-            remainingFiles.Count().Should().Be(0);
+            uploadResumeReport.RemainingFiles.Count().Should().Be(0);
         }
         
         [Theory]
@@ -134,14 +134,14 @@ namespace XboxFtp.Core.Tests.Unit
             }
             
             // act
-            var remainingFiles = sut.GetRemainingFiles();
+            var uploadResumeReport = sut.GetRemainingFiles();
             
             // assert
-            remainingFiles.Count().Should().Be(totalFileCount - existingFileCount);
+            uploadResumeReport.RemainingFiles.Count().Should().Be(totalFileCount - existingFileCount);
             for (int i = 0; i < totalFileCount - existingFileCount; i++)
             {
                 string expectedFileName = $"TestFile{i + existingFileCount}";
-                remainingFiles[i].FileName.Should().Be(expectedFileName);
+                uploadResumeReport.RemainingFiles[i].FileName.Should().Be(expectedFileName);
             }
         }
     }

@@ -29,7 +29,7 @@ namespace XboxFtp.Core.Entities
             _xboxGameRepository = xboxGameRepository;
         }
 
-        public IList<IZipEntry> GetRemainingFiles()
+        public UploadResumeReport GetRemainingFiles()
         {
             var filesToCheck = _filesToCheck.ToList();
             int filesExistCount = 0;
@@ -51,7 +51,7 @@ namespace XboxFtp.Core.Entities
             
             filesToCheck.RemoveRange(0, filesExistCount);
 
-            return filesToCheck;
+            return new UploadResumeReport(filesToCheck);
         }
     }
 }

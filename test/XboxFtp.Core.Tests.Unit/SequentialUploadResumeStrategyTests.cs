@@ -38,11 +38,11 @@ namespace XboxFtp.Core.Tests.Unit
             var sut = CreateSut(filesToCheck);
 
             // act
-            var remainingFiles = sut.GetRemainingFiles();
+            var uploadResumeReport = sut.GetRemainingFiles();
             
             // assert
-            remainingFiles.Count().Should().Be(3);
-            remainingFiles.Select(x => x.FileName).Should().BeEquivalentTo(new[] {"TestFile1", "TestFile2", "TestFile3"});
+            uploadResumeReport.RemainingFiles.Count().Should().Be(3);
+            uploadResumeReport.RemainingFiles.Select(x => x.FileName).Should().BeEquivalentTo(new[] {"TestFile1", "TestFile2", "TestFile3"});
         }
         
         [Fact]
@@ -57,12 +57,12 @@ namespace XboxFtp.Core.Tests.Unit
             _xboxGameRepository.Store("TestGame", "TestFile1", new byte[] { 1,2,3,4});
             
             // act
-            var remainingFiles = sut.GetRemainingFiles();
+            var uploadResumeReport = sut.GetRemainingFiles();
             
             // assert
-            remainingFiles.Count().Should().Be(2);
-            remainingFiles.Should().NotContain(x => x.FileName == "TestFile1");
-            remainingFiles.Select(x => x.FileName).Should().BeEquivalentTo(new[] {"TestFile2", "TestFile3"});
+            uploadResumeReport.RemainingFiles.Count().Should().Be(2);
+            uploadResumeReport.RemainingFiles.Should().NotContain(x => x.FileName == "TestFile1");
+            uploadResumeReport.RemainingFiles.Select(x => x.FileName).Should().BeEquivalentTo(new[] {"TestFile2", "TestFile3"});
         }
         
         [Fact]
@@ -77,11 +77,11 @@ namespace XboxFtp.Core.Tests.Unit
             _xboxGameRepository.Store("TestGame", "TestFile1", new byte[] { 1,2,3,4});
             
             // act
-            var remainingFiles = sut.GetRemainingFiles();
+            var uploadResumeReport = sut.GetRemainingFiles();
             
             // assert
-            remainingFiles.Count().Should().Be(3);
-            remainingFiles.Select(x => x.FileName).Should().BeEquivalentTo(new[] {"TestFile1", "TestFile2", "TestFile3"});
+            uploadResumeReport.RemainingFiles.Count().Should().Be(3);
+            uploadResumeReport.RemainingFiles.Select(x => x.FileName).Should().BeEquivalentTo(new[] {"TestFile1", "TestFile2", "TestFile3"});
         }
     }
 }

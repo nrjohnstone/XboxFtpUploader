@@ -6,6 +6,17 @@ using XboxFtp.Core.Ports.Persistence;
 
 namespace XboxFtp.Core.Entities
 {
+    public class UploadResumeReport
+    {
+        public UploadResumeReport(IList<IZipEntry> remainingFiles)
+        {
+            if (remainingFiles == null) throw new ArgumentNullException(nameof(remainingFiles));
+            RemainingFiles = remainingFiles;
+        }
+
+        public IList<IZipEntry> RemainingFiles { get; private set; } 
+    }
+    
     /// <summary>
     /// A resume strategy that uses a binary search to find the resume point
     /// </summary>
@@ -28,7 +39,7 @@ namespace XboxFtp.Core.Entities
             _xboxGameRepository = xboxGameRepository;
         }
 
-        public IList<IZipEntry> GetRemainingFiles()
+        public UploadResumeReport GetRemainingFiles()
         {
             int lowerBound = 0;
             int upperBound = _filesToCheck.Count - 1;
@@ -43,7 +54,7 @@ namespace XboxFtp.Core.Entities
             var zipEntry = filesToCheckList[0];
             if (!_xboxGameRepository.Exists(_gameName, zipEntry.FileName, zipEntry.UncompressedSize))
             {
-                return filesToCheckList;
+                return  new UploadResumeReport(filesToCheckList);
             }
 
             while (lowerBound <= upperBound)
@@ -67,7 +78,7 @@ namespace XboxFtp.Core.Entities
             }
 
             filesToCheckList.RemoveRange(0, resumePosition + 1);
-            return filesToCheckList;
+            return new UploadResumeReport(filesToCheckList);
         }
     }
 }
