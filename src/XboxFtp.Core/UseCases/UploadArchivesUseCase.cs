@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -98,6 +99,15 @@ namespace XboxFtp.Core.UseCases
             {
                 Log.Error(ex, "An unhandled exception occurred while uploading archives");
             }
+
+            ClearTemporaryFiles();
+        }
+
+        private void ClearTemporaryFiles()
+        {
+            Log.Information("Cleaning temporary file cache");
+            var xboxTempFileDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "XboxFtp", "Temp");
+            Directory.Delete(xboxTempFileDirectory, true);
         }
 
         private void NotifyAllGames(List<string> archivePaths)
