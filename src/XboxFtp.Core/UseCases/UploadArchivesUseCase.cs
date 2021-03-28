@@ -64,7 +64,7 @@ namespace XboxFtp.Core.UseCases
                             var filesInArchive = GetAllFilesInArchive(gameName, archivePath);
                             long totalSizeOfArchive = filesInArchive.Sum(x => x.UncompressedSize);
                             
-                            var uploadResumeReport = GetFilesToUpload(gameName, archivePath);
+                            var uploadResumeReport = CheckForResumeUpload(gameName, archivePath);
                             long totalSizeFilesToUpload = uploadResumeReport.RemainingFiles.Sum(x => x.UncompressedSize);
 
                             Log.ForContext("TotalUncompressedSize", totalSizeOfArchive)
@@ -124,7 +124,7 @@ namespace XboxFtp.Core.UseCases
             }
         }
         
-        private UploadResumeReport GetFilesToUpload(string gameName, string archivePath)
+        private UploadResumeReport CheckForResumeUpload(string gameName, string archivePath)
         {
             IXboxGameRepository xboxGameRepository = _xboxGameRepositoryFactory.Create();
             xboxGameRepository.Connect();
@@ -197,7 +197,7 @@ namespace XboxFtp.Core.UseCases
         {
             _notifier.ExtractFileToDisk(gameName, zipEntry.FileName);
 
-            var xboxTempFileDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "XboxFtp", "Temp", gameName);
+            var xboxTempFileDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "XboxFtp", "Temp", gameName);
 
             zipEntry.Extract(xboxTempFileDirectory, ExtractExistingFileAction.OverwriteSilently);
 
