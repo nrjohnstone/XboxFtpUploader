@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 
-namespace XboxFtp.Console
+namespace XboxFtp.Console.Configuration
 {
     public class Settings
     {
@@ -18,7 +17,6 @@ namespace XboxFtp.Console
         public List<string> GamesToUpload { get; set; }
         
         /// <summary>
-        /// A single game to upload
         /// </summary>
         public string GameToUpload { get; set; }
         

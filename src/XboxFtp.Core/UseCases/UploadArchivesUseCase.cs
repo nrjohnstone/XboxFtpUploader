@@ -105,9 +105,14 @@ namespace XboxFtp.Core.UseCases
 
         private void ClearTemporaryFiles()
         {
+            // TODO NJ : Abstract all the temporary access to a port and an adapter the implements it to disk rather than here
             Log.Information("Cleaning temporary file cache");
             var xboxTempFileDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "XboxFtp", "Temp");
-            Directory.Delete(xboxTempFileDirectory, true);
+
+            if (Directory.Exists(xboxTempFileDirectory))
+            {
+                Directory.Delete(xboxTempFileDirectory, true);    
+            }
         }
 
         private void NotifyAllGames(List<string> archivePaths)

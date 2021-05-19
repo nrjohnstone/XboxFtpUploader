@@ -7,6 +7,7 @@ using Adapter.Notifier.TerminalGui;
 using Adapter.Persistence.Ftp;
 using Adapter.Persistence.InMemory;
 using Serilog;
+using XboxFtp.Console.Configuration;
 using XboxFtp.Console.Configuration.Logging;
 using XboxFtp.Core.Ports.Notification;
 using XboxFtp.Core.UseCases;

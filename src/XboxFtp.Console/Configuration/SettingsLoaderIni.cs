@@ -1,9 +1,8 @@
 ﻿using System;
 using System.IO;
-using Adapter.Persistence.Ftp;
 using Microsoft.Extensions.Configuration;
 
-namespace XboxFtp.Console
+namespace XboxFtp.Console.Configuration
 {
     internal class SettingsLoaderIni
     {
