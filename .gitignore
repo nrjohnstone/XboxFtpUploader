@@ -36,3 +36,4 @@ tools/
 *.ncrunchsolution
 *_NCrunch_*
 /.idea/
+/global.json
